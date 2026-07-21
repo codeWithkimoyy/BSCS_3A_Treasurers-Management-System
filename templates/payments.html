@@ -47,15 +47,21 @@
         {% endif %}
             <div class="table-responsive">
                 <table class="table table-modern">
-                    <thead><tr><th>Student ID</th><th>Name</th><th class="d-none d-sm-table-cell">Course</th><th>Progress</th><th style="min-width:120px">This Payment</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
+                    <thead><tr><th style="width:40px"></th><th>Student ID</th><th>Name</th><th class="d-none d-sm-table-cell">Course</th><th>Progress</th><th style="min-width:120px">Amount</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
                     <tbody>
                         {% for s in students %}
                         {% set payment = payments|selectattr('student_id','equalto',s._id)|first %}
                         {% set amount_paid = payment.amount_paid if payment else 0 %}
                         {% set is_locked = payment and payment.locked %}
-                        {% set remaining = (event.amount - amount_paid) if amount_paid < event.amount else 0 %}
                         {% set pct = (amount_paid / event.amount * 100) if event.amount > 0 else 0 %}
                         <tr class="{{ 'table-success' if is_locked }}">
+                            <td onclick="event.stopPropagation()">
+                                {% if is_locked %}
+                                <i class="bi bi-check-circle-fill" style="color:#059669;"></i>
+                                {% elif can_manage_data() %}
+                                <input type="checkbox" name="selected" value="{{ s._id }}" class="form-check-input" style="width:1.1rem;height:1.1rem;cursor:pointer;">
+                                {% endif %}
+                            </td>
                             <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
                             <td><strong>{{ s.name }}</strong></td>
                             <td class="d-none d-sm-table-cell">{{ s.course or '—' }}</td>
@@ -75,8 +81,8 @@
                                 {% elif can_manage_data() %}
                                 <div class="d-flex align-items-center gap-1">
                                     <span style="font-size:.8rem;color:#64748b;">₱</span>
-                                    <input type="hidden" name="student_ids" value="{{ s._id }}">
-                                    <input type="number" name="amounts" value="0" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0">
+                                    <input type="hidden" name="student_ids" value="{{ s._id }}" class="sid-input">
+                                    <input type="number" name="amounts" value="0" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern amt-input" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0">
                                 </div>
                                 {% else %}
                                 <span style="color:#94a3b8;">—</span>
@@ -105,7 +111,7 @@
                         </tr>
                         {% endfor %}
                         {% if not students %}
-                        <tr><td colspan="8"><div class="empty-state"><i class="bi bi-people"></i><p>No active students. Add students first.</p></div></td></tr>
+                        <tr><td colspan="9"><div class="empty-state"><i class="bi bi-people"></i><p>No active students. Add students first.</p></div></td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -113,7 +119,7 @@
             {% if students and can_manage_data() %}
             <div class="p-3 border-top d-flex justify-content-between align-items-center">
                 <div style="font-size:.8rem;color:#64748b;">
-                    <i class="bi bi-info-circle"></i> Enter the amount each student paid today. Repeat until the target is reached.
+                    <i class="bi bi-info-circle"></i> Check the box, enter the amount they paid today, then confirm.
                 </div>
                 <button type="submit" class="btn btn-modern-primary" onclick="return confirm('Confirm entered payments?')">
                     <i class="bi bi-check2-all"></i> Confirm Payments
@@ -155,4 +161,16 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+document.querySelectorAll('input[name="selected"]').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var row = this.closest('tr');
+        var sid = row.querySelector('.sid-input');
+        var amt = row.querySelector('.amt-input');
+        if (sid) sid.disabled = !this.checked;
+        if (amt) amt.disabled = !this.checked;
+    });
+});
+</script>
 {% endblock %}
