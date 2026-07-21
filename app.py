@@ -1,4 +1,4 @@
-import os, ssl
+import os
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -25,11 +25,7 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 os.makedirs(app.instance_path, exist_ok=True)
 
-ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
-ssl_ctx.check_hostname = False
-ssl_ctx.verify_mode = ssl.CERT_NONE
-client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=5000, tls=True, ssl_context=ssl_ctx)
+client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=10000, tls=True, tlsInsecure=True)
 db = client.get_database()
 
 login_manager = LoginManager()
