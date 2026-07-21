@@ -3,6 +3,7 @@ from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from dotenv import load_dotenv, set_key
 import io
@@ -35,6 +36,20 @@ login_manager.login_view = 'login'
 plt.rcParams['font.family'] = 'sans-serif'
 
 ROLES = ['admin', 'mayor', 'treasurer', 'staff']
+
+def format_name(raw):
+    raw = raw.strip()
+    if ',' in raw:
+        parts = [p.strip() for p in raw.split(',', 1)]
+        last = parts[0].upper()
+        first = parts[1].title() if len(parts) > 1 else ''
+        return f"{last}, {first}"
+    words = raw.split()
+    if len(words) < 2:
+        return raw.upper()
+    last = words[-1].upper()
+    first = ' '.join(words[:-1]).title()
+    return f"{last}, {first}"
 
 def can_override():
     return current_user.role in ['admin', 'mayor', 'treasurer']
@@ -499,7 +514,7 @@ def add_student():
     try:
         db.students.insert_one({
             '_id': next_id('students'), 'student_id': request.form['student_id'],
-            'name': request.form['name'], 'course': request.form.get('course',''),
+            'name': format_name(request.form['name']), 'course': request.form.get('course',''),
             'year': request.form.get('year',''), 'email': request.form.get('email',''),
             'phone': request.form.get('phone',''), 'is_active': 1, 'created_at': datetime.now()
         })
@@ -512,7 +527,7 @@ def add_student():
 @login_required
 def edit_student(id):
     db.students.update_one({'_id': id}, {'$set': {
-        'name': request.form['name'], 'course': request.form.get('course',''),
+        'name': format_name(request.form['name']), 'course': request.form.get('course',''),
         'year': request.form.get('year',''), 'email': request.form.get('email',''),
         'phone': request.form.get('phone',''), 'is_active': int(request.form.get('is_active', 0))
     }})
