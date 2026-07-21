@@ -26,7 +26,7 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 os.makedirs(app.instance_path, exist_ok=True)
 
-client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=5000)
+client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=True)
 db = client.get_database()
 
 login_manager = LoginManager()
