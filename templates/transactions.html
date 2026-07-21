@@ -13,12 +13,13 @@
     <div class="card-body-modern p-0">
         <div class="table-responsive">
             <table class="table table-modern datatable">
-                <thead><tr><th>Date</th><th>Type</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>By</th><th style="width:50px"></th></tr></thead>
+                <thead><tr><th>Date</th><th>Type</th><th>Receipt #</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>By</th><th style="width:50px"></th></tr></thead>
                 <tbody>
                     {% for t in transactions %}
                     <tr>
                         <td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
                         <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ 'Income' if t.type=='income' else 'Expense' }}</span></td>
+                        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.7rem;">{{ t.receipt or t.reference or '—' }}</code></td>
                         <td>{{ t.student_name or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
                         <td>{{ t.description or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
                         <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
@@ -27,7 +28,7 @@
                     </tr>
                     {% endfor %}
                     {% if not transactions %}
-                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><p>No transactions recorded</p></div></td></tr>
+                    <tr><td colspan="8"><div class="empty-state"><i class="bi bi-inbox"></i><p>No transactions recorded</p></div></td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -45,11 +46,11 @@
                         <label class="form-label-modern">Transaction Type</label>
                         <div class="d-flex gap-2 mt-1">
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="type" id="typeIncome" value="income" checked onchange="toggleCatType()">
+                                <input class="form-check-input" type="radio" name="type" id="typeIncome" value="income" checked>
                                 <label class="form-check-label" for="typeIncome" style="font-size:.85rem;color:#059669;"><i class="bi bi-arrow-up-circle"></i> Income</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="type" id="typeExpense" value="expense" onchange="toggleCatType()">
+                                <input class="form-check-input" type="radio" name="type" id="typeExpense" value="expense">
                                 <label class="form-check-label" for="typeExpense" style="font-size:.85rem;color:#dc2626;"><i class="bi bi-arrow-down-circle"></i> Expense</label>
                             </div>
                         </div>

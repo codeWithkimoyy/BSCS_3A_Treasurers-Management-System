@@ -594,7 +594,7 @@ def transactions():
         {'$lookup': {'from': 'users', 'localField': 'created_by', 'foreignField': '_id', 'as': 'user'}},
         {'$unwind': {'path': '$student', 'preserveNullAndEmptyArrays': True}},
         {'$unwind': {'path': '$user', 'preserveNullAndEmptyArrays': True}},
-        {'$project': {'transaction_date': 1, 'type': 1, 'amount': 1, 'description': 1, 'reference': 1, 'payment_method': 1, 'created_at': 1, 'student_name': '$student.name', 'username': '$user.username'}}
+        {'$project': {'transaction_date': 1, 'type': 1, 'amount': 1, 'description': 1, 'reference': 1, 'receipt': 1, 'payment_method': 1, 'created_at': 1, 'student_name': '$student.name', 'username': '$user.username'}}
     ]))
     return render_template('transactions.html', transactions=txn,
         students=list(db.students.find({'is_active': 1}).sort('name', 1)),
@@ -603,20 +603,22 @@ def transactions():
 @app.route('/transactions/add', methods=['POST'])
 @login_required
 def add_transaction():
+    txn_id = next_id('transactions')
+    receipt = f"RCP-{date.today().strftime('%Y%m%d')}-{txn_id:04d}"
     db.transactions.insert_one({
-        '_id': next_id('transactions'),
+        '_id': txn_id,
         'student_id': int(request.form.get('student_id')) if request.form.get('student_id') else None,
-        'category_id': int(request.form['category_id']),
         'amount': float(request.form['amount']),
         'type': request.form['type'],
         'description': request.form.get('description',''),
-        'reference': request.form.get('reference',''),
+        'reference': receipt,
+        'receipt': receipt,
         'payment_method': request.form.get('payment_method','cash'),
         'transaction_date': request.form.get('transaction_date', date.today().isoformat()),
         'created_by': current_user.id,
         'created_at': datetime.now()
     })
-    flash('Transaction recorded', 'success')
+    flash(f'Transaction recorded — Receipt #{receipt}', 'success')
     return redirect(url_for('transactions'))
 
 @app.route('/transactions/delete/<int:id>', methods=['POST'])
