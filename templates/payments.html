@@ -47,7 +47,7 @@
         {% endif %}
             <div class="table-responsive">
                 <table class="table table-modern">
-                    <thead><tr><th style="width:40px"></th><th>Student ID</th><th>Name</th><th class="d-none d-sm-table-cell">Course</th><th>Progress</th><th style="min-width:120px">Amount</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
+                    <thead><tr><th style="width:40px"></th><th>Name</th><th>Student ID</th><th class="d-none d-sm-table-cell">Course</th><th>Progress</th><th style="min-width:120px">Amount</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
                     <tbody>
                         {% for s in students %}
                         {% set payment = payments|selectattr('student_id','equalto',s._id)|first %}
@@ -62,8 +62,8 @@
                                 <input type="checkbox" name="selected" value="{{ s._id }}" class="form-check-input" style="width:1.1rem;height:1.1rem;cursor:pointer;">
                                 {% endif %}
                             </td>
-                            <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
                             <td><strong>{{ s.name }}</strong></td>
+                            <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
                             <td class="d-none d-sm-table-cell">{{ s.course or '—' }}</td>
                             <td style="min-width:140px">
                                 {% if payment %}

@@ -13,12 +13,12 @@
     <div class="card-body-modern p-0">
         <div class="table-responsive">
             <table class="table table-modern datatable">
-                <thead><tr><th>ID</th><th>Name</th><th>Course</th><th>Year</th><th>Contact</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+                <thead><tr><th>Name</th><th>ID</th><th>Course</th><th>Year</th><th>Contact</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
                 <tbody>
                     {% for s in students %}
                     <tr class="{{ 'opacity-50' if not s.is_active }}">
-                        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
                         <td><strong>{{ s.name }}</strong></td>
+                        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
                         <td>{{ s.course or '—' }}</td>
                         <td>{{ s.year or '—' }}</td>
                         <td style="font-size:.8rem;">{% if s.email %}<i class="bi bi-envelope" style="color:#94a3b8;"></i> {{ s.email }}<br>{% endif %}{% if s.phone %}<i class="bi bi-telephone" style="color:#94a3b8;"></i> {{ s.phone }}{% endif %}{% if not s.email and not s.phone %}—{% endif %}</td>
