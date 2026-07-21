@@ -1,9 +1,8 @@
-import os
-from datetime import datetime, date, timedelta
+import os, ssl
+from datetime import datetime, date
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from dotenv import load_dotenv, set_key
 import io
@@ -26,7 +25,11 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 os.makedirs(app.instance_path, exist_ok=True)
 
-client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=True)
+ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+ssl_ctx.check_hostname = False
+ssl_ctx.verify_mode = ssl.CERT_NONE
+client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=5000, tls=True, ssl_context=ssl_ctx)
 db = client.get_database()
 
 login_manager = LoginManager()
