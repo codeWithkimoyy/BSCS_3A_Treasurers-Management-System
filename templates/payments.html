@@ -4,7 +4,7 @@
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
         <h3><i class="bi bi-credit-card"></i> Payment Collection</h3>
-        <div class="subtitle">Select an event to manage student payments</div>
+        <div class="subtitle">Enter amount paid per student and confirm</div>
     </div>
 </div>
 
@@ -24,7 +24,7 @@
             <div class="col-md-3">
                 <div class="form-label-modern">&nbsp;</div>
                 <div class="d-flex gap-2">
-                    <span class="badge badge-income fs-6" style="font-size:.8rem!important;padding:.45rem 1rem;">Fee: ₱{{ "%.2f"|format(event.amount) }}</span>
+                    <span class="badge badge-income fs-6" style="font-size:.8rem!important;padding:.45rem 1rem;">Target: ₱{{ "%.2f"|format(event.amount) }}</span>
                     {% if event.deadline %}
                     <span class="badge fs-6" style="font-size:.8rem!important;padding:.45rem 1rem;background:#f1f5f9;color:#475569;">Deadline: {{ event.deadline }}</span>
                     {% endif %}
@@ -39,7 +39,7 @@
 <div class="card-modern animate-in">
     <div class="card-header-modern d-flex justify-content-between align-items-center">
         <span><i class="bi bi-people" style="color:var(--primary)"></i> Students — {{ event.title }}</span>
-        <span class="badge" style="background:#dbeafe;color:#1e40af;">{{ payments|selectattr('confirmed','equalto',True)|list|length }} / {{ students|length }} paid</span>
+        <span class="badge" style="background:#dbeafe;color:#1e40af;">{{ payments|selectattr('locked','equalto',True)|list|length }} / {{ students|length }} fully paid</span>
     </div>
     <div class="card-body-modern p-0">
         {% if can_manage_data() %}<form method="POST" action="{{ url_for('confirm_payments') }}" id="paymentForm">
@@ -47,28 +47,46 @@
         {% endif %}
             <div class="table-responsive">
                 <table class="table table-modern">
-                    <thead><tr><th style="width:50px"></th><th>Student ID</th><th>Name</th><th class="d-none d-sm-table-cell">Course</th><th>Amount</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
+                    <thead><tr><th>Student ID</th><th>Name</th><th class="d-none d-sm-table-cell">Course</th><th>Progress</th><th style="min-width:120px">This Payment</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
                     <tbody>
                         {% for s in students %}
                         {% set payment = payments|selectattr('student_id','equalto',s._id)|first %}
-                        {% set is_confirmed = payment and payment.confirmed %}
-                        <tr class="{{ 'table-success' if is_confirmed }}" onclick="toggleRow(this, {{ s._id }}, {{ 'true' if is_confirmed else 'false' }})" style="cursor:{{ 'default' if is_confirmed else 'pointer' }}">
-                            <td onclick="event.stopPropagation()">
-                                {% if not can_manage_data() %}<i class="bi bi-eye" style="color:#94a3b8;"></i>{% endif %}
-                                {% if can_manage_data() %}
-                                <input type="checkbox" name="student_ids" value="{{ s._id }}" class="form-check-input"
-                                    {{ 'checked' if is_confirmed }}
-                                    {{ 'disabled' if is_confirmed }}
-                                    style="width:1.1rem;height:1.1rem;cursor:{{ 'not-allowed' if is_confirmed else 'pointer' }}">
-                                {% endif %}
-                            </td>
+                        {% set amount_paid = payment.amount_paid if payment else 0 %}
+                        {% set is_locked = payment and payment.locked %}
+                        {% set remaining = (event.amount - amount_paid) if amount_paid < event.amount else 0 %}
+                        {% set pct = (amount_paid / event.amount * 100) if event.amount > 0 else 0 %}
+                        <tr class="{{ 'table-success' if is_locked }}">
                             <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
                             <td><strong>{{ s.name }}</strong></td>
                             <td class="d-none d-sm-table-cell">{{ s.course or '—' }}</td>
-                            <td><strong>₱{{ "%.2f"|format(event.amount) }}</strong></td>
+                            <td style="min-width:140px">
+                                {% if payment %}
+                                <div style="font-size:.75rem;font-weight:600;margin-bottom:2px;">₱{{ "%.2f"|format(amount_paid) }} / ₱{{ "%.2f"|format(event.amount) }}</div>
+                                <div class="progress-modern" style="height:6px;background:#e2e8f0;border-radius:4px;">
+                                    <div class="progress-bar-modern" style="width:{{ pct }}%;height:6px;border-radius:4px;background:{{ '#059669' if is_locked else '#3b82f6' }};"></div>
+                                </div>
+                                {% else %}
+                                <span style="color:#94a3b8;font-size:.8rem;">₱0 / ₱{{ "%.2f"|format(event.amount) }}</span>
+                                {% endif %}
+                            </td>
                             <td>
-                                {% if is_confirmed %}
+                                {% if is_locked %}
+                                <span class="badge badge-income" style="font-size:.75rem;">Fully Paid</span>
+                                {% elif can_manage_data() %}
+                                <div class="d-flex align-items-center gap-1">
+                                    <span style="font-size:.8rem;color:#64748b;">₱</span>
+                                    <input type="hidden" name="student_ids" value="{{ s._id }}">
+                                    <input type="number" name="amounts" value="{{ '%.2f'|format(remaining) }}" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0">
+                                </div>
+                                {% else %}
+                                <span style="color:#94a3b8;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if is_locked %}
                                 <span class="badge badge-income">Paid</span>
+                                {% elif payment %}
+                                <span class="badge" style="background:#fef3c7;color:#92400e;">Partial</span>
                                 {% else %}
                                 <span class="badge" style="background:#f1f5f9;color:#64748b;">Pending</span>
                                 {% endif %}
@@ -77,10 +95,10 @@
                                 {{ payment.confirmer_name if payment and payment.confirmer_name else '—' }}
                             </td>
                             <td class="d-none d-sm-table-cell">
-                                {% if is_confirmed and can_override() %}
+                                {% if is_locked and can_override() %}
                                 <button type="button" class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#unconfirmModal{{ payment._id }}" title="Override"><i class="bi bi-unlock"></i></button>
                                 {% endif %}
-                                {% if not is_confirmed %}
+                                {% if not is_locked %}
                                 <span style="color:#94a3b8;font-size:.7rem;">—</span>
                                 {% endif %}
                             </td>
@@ -94,12 +112,10 @@
             </div>
             {% if students and can_manage_data() %}
             <div class="p-3 border-top d-flex justify-content-between align-items-center">
-                <div>
-                    <label class="form-check-label" style="font-size:.85rem;cursor:pointer;">
-                        <input type="checkbox" id="selectAll" onchange="toggleAll(this)" style="margin-right:.5rem;">Select All Unpaid
-                    </label>
+                <div style="font-size:.8rem;color:#64748b;">
+                    <i class="bi bi-info-circle"></i> Enter the amount each student paid today. Repeat until the target is reached.
                 </div>
-                <button type="submit" class="btn btn-modern-primary" onclick="return confirm('Confirm selected payments? This cannot be undone without admin/mayor/treasurer override.')">
+                <button type="submit" class="btn btn-modern-primary" onclick="return confirm('Confirm entered payments?')">
                     <i class="bi bi-check2-all"></i> Confirm Payments
                 </button>
             </div>
@@ -110,14 +126,14 @@
 
 {% for s in students %}
 {% set payment = payments|selectattr('student_id','equalto',s._id)|first %}
-{% if payment and payment.confirmed and can_override() %}
+{% if payment and payment.locked and can_override() %}
 <div class="modal fade modal-modern" id="unconfirmModal{{ payment._id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-unlock"></i> Override Payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('unconfirm_payment', payment_id=payment._id) }}">
             <div class="modal-body">
-                <p style="font-size:.9rem;">Unconfirm payment for <strong>{{ s.name }}</strong>?</p>
-                <p style="font-size:.8rem;color:#64748b;">This will unlock the payment record. Only admins, mayors, and treasurers can do this.</p>
+                <p style="font-size:.9rem;">Unlock and reset payment for <strong>{{ s.name }}</strong>?</p>
+                <p style="font-size:.8rem;color:#64748b;">This will reset their paid amount to ₱0. Only admins, mayors, and treasurers can do this.</p>
                 <div class="mb-3"><label class="form-label-modern">Reason for override</label>
                     <textarea name="notes" class="form-control form-modern" rows="2" required placeholder="Explain why this payment is being unlocked"></textarea>
                 </div>
@@ -132,16 +148,6 @@
 {% endif %}
 {% endfor %}
 
-<script>
-function toggleAll(source) {
-    document.querySelectorAll('input[name="student_ids"]:not(:disabled)').forEach(cb => cb.checked = source.checked);
-}
-function toggleRow(tr, sid, isConfirmed) {
-    if (isConfirmed) return;
-    var cb = tr.querySelector('input[name="student_ids"]');
-    if (cb && !cb.disabled) cb.checked = !cb.checked;
-}
-</script>
 {% else %}
 <div class="card-modern animate-in">
     <div class="card-body-modern">

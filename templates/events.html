@@ -25,15 +25,16 @@
                     {% endif %}
                 </div>
 
+                {% set total_target = e.amount * e.total_students %}
                 <div class="d-flex justify-content-between mb-1" style="font-size:.75rem;">
                     <span style="color:#64748b;">Collection</span>
-                    <span><strong>{{ e.paid_count }}</strong> / {{ e.total_students }} students</span>
+                    <span><strong>{{ e.paid_count }}</strong> / {{ e.total_students }} students · <strong>₱{{ "%.2f"|format(e.collected) }}</strong> / ₱{{ "%.2f"|format(total_target) }}</span>
                 </div>
                 <div class="progress-modern mb-1">
-                    <div class="progress-bar-modern" style="width:{{ (e.paid_count / e.total_students * 100) if e.total_students > 0 else 0 }}%"></div>
+                    <div class="progress-bar-modern" style="width:{{ (e.collected / total_target * 100) if total_target > 0 else 0 }}%"></div>
                 </div>
                 <div style="font-size:.7rem;color:#94a3b8;margin-bottom:.75rem;">
-                    ₱{{ "%.2f"|format(e.collected) }} collected of ₱{{ "%.2f"|format(e.amount * e.total_students) }} target
+                    ₱{{ "%.2f"|format(e.collected) }} collected of ₱{{ "%.2f"|format(total_target) }} target
                 </div>
                 <div class="mt-auto d-flex gap-1">
                     <a href="{{ url_for('payments', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>

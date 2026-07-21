@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -90,7 +90,7 @@ def get_financial_totals():
     """Return canonical totals without counting payment ledger rows twice."""
     confirmed_payments = list(db.payments.aggregate([
         {'$match': {'confirmed': True}},
-        {'$group': {'_id': None, 'total': {'$sum': '$amount'}}}
+        {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}
     ]))
     manual_income = list(db.transactions.aggregate([
         {'$match': {
@@ -125,7 +125,7 @@ def get_confirmed_payment_rows(start=None, end=None):
         {'$unwind': {'path': '$student', 'preserveNullAndEmptyArrays': True}},
         {'$unwind': {'path': '$event', 'preserveNullAndEmptyArrays': True}},
         {'$project': {
-            '_id': 1, 'student_id': 1, 'amount': 1, 'notes': 1, 'confirmed_at': 1,
+            '_id': 1, 'student_id': 1, 'amount': '$amount_paid', 'notes': 1, 'confirmed_at': 1,
             'transaction_date': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$confirmed_at'}},
             'type': {'$literal': 'income'},
             'description': {'$concat': ['Payment: ', '$event.title']},
@@ -251,7 +251,7 @@ def dashboard():
         {'$lookup': {'from': 'events', 'localField': 'event_id', 'foreignField': '_id', 'as': 'event'}},
         {'$unwind': {'path': '$student', 'preserveNullAndEmptyArrays': True}},
         {'$unwind': {'path': '$event', 'preserveNullAndEmptyArrays': True}},
-        {'$project': {'amount': 1, 'confirmed_at': 1, 'notes': 1, 'student_name': '$student.name', 'event_title': '$event.title'}}
+        {'$project': {'amount': '$amount_paid', 'confirmed_at': 1, 'notes': 1, 'student_name': '$student.name', 'event_title': '$event.title'}}
     ]))
 
     six_months_ago = datetime.now()
@@ -269,7 +269,7 @@ def dashboard():
         {'$match': {'confirmed': True, 'confirmed_at': {'$gte': six_months_ago}}},
         {'$group': {
             '_id': {'$dateToString': {'format': '%Y-%m', 'date': '$confirmed_at'}},
-            'inc': {'$sum': '$amount'}
+            'inc': {'$sum': '$amount_paid'}
         }},
         {'$project': {'_id': 0, 'mon': '$_id', 'inc': 1}}
     ]))
@@ -321,7 +321,7 @@ def events():
     for e in evts:
         total_paid = list(db.payments.aggregate([
             {'$match': {'event_id': e['_id'], 'confirmed': True}},
-            {'$group': {'_id': None, 'total': {'$sum': '$amount'}}}
+            {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}
         ]))
         total_students = db.students.count_documents({'is_active': 1})
         paid_count = db.payments.count_documents({'event_id': e['_id'], 'confirmed': True})
@@ -391,53 +391,79 @@ def confirm_payments():
         flash('Read-only accounts cannot confirm payments', 'error')
         return redirect(url_for('payments'))
     event_id = int(request.form['event_id'])
-    student_ids = request.form.getlist('student_ids')
     event = db.events.find_one({'_id': event_id})
+    if not event:
+        flash('Event not found', 'error')
+        return redirect(url_for('payments'))
 
-    for sid in student_ids:
-        sid = int(sid)
-        existing = db.payments.find_one({'event_id': event_id, 'student_id': sid})
-        if existing and existing.get('confirmed'):
+    student_ids = request.form.getlist('student_ids')
+    amounts_in = request.form.getlist('amounts')
+    target = event['amount']
+    count = 0
+
+    for sid_str, amount_str in zip(student_ids, amounts_in):
+        try:
+            sid = int(sid_str)
+            paid_now = float(amount_str)
+        except (ValueError, TypeError):
             continue
-        amount = event['amount'] if event else 0
+        if paid_now <= 0:
+            continue
+
+        existing = db.payments.find_one({'event_id': event_id, 'student_id': sid})
+        if existing and existing.get('locked'):
+            continue
+
         if existing:
             payment_id = existing['_id']
-            db.payments.update_one({'_id': existing['_id']}, {'$set': {
+            prev = existing.get('amount_paid', 0) or 0
+            can_pay = min(paid_now, target - prev)
+            if can_pay <= 0:
+                continue
+            new_amount_paid = prev + can_pay
+            is_locked = new_amount_paid >= target
+            db.payments.update_one({'_id': payment_id}, {'$set': {
                 'confirmed': True,
+                'amount_paid': new_amount_paid,
                 'confirmed_by': current_user.id,
                 'confirmed_at': datetime.now(),
-                'locked': True
+                'locked': is_locked,
             }})
         else:
             payment_id = next_id('payments')
+            can_pay = min(paid_now, target)
+            if can_pay <= 0:
+                continue
+            new_amount_paid = can_pay
+            is_locked = new_amount_paid >= target
             db.payments.insert_one({
                 '_id': payment_id,
                 'event_id': event_id,
                 'student_id': sid,
-                'amount': amount,
+                'amount': target,
+                'amount_paid': new_amount_paid,
                 'confirmed': True,
                 'confirmed_by': current_user.id,
                 'confirmed_at': datetime.now(),
-                'locked': True,
+                'locked': is_locked,
                 'notes': '',
                 'created_at': datetime.now()
             })
-        # Keep the ledger entry linked to its payment and make confirmation
-        # idempotent, including after an unlock/reconfirm cycle.
-        if not db.transactions.find_one({'payment_id': payment_id}):
-            db.transactions.insert_one({
-                '_id': next_id('transactions'),
-                'payment_id': payment_id,
-                'type': 'income',
-                'amount': amount,
-                'student_id': sid,
-                'description': f"Payment: {event['title']}" if event else 'Event payment',
-                'transaction_date': date.today().isoformat(),
-                'created_by': current_user.id,
-                'created_at': datetime.now()
-            })
 
-    flash(f'{len(student_ids)} payment(s) confirmed', 'success')
+        db.transactions.insert_one({
+            '_id': next_id('transactions'),
+            'payment_id': payment_id,
+            'type': 'income',
+            'amount': can_pay,
+            'student_id': sid,
+            'description': f"Payment: {event['title']}" if event else 'Event payment',
+            'transaction_date': date.today().isoformat(),
+            'created_by': current_user.id,
+            'created_at': datetime.now()
+        })
+        count += 1
+
+    flash(f'{count} payment(s) confirmed', 'success')
     return redirect(url_for('payments', event_id=event_id))
 
 @app.route('/payments/unconfirm/<int:payment_id>', methods=['POST'])
@@ -452,24 +478,13 @@ def unconfirm_payment(payment_id):
         flash('Payment not found', 'error')
         return redirect(url_for('payments'))
 
-    event = db.events.find_one({'_id': payment['event_id']})
     db.payments.update_one({'_id': payment_id}, {'$set': {
         'confirmed': False,
+        'amount_paid': 0,
         'locked': False,
         'notes': request.form.get('notes', 'Overridden by ' + current_user.username)
     }})
-    # Remove the linked income entry so reports and exports do not retain a
-    # payment that has been explicitly unlocked.
-    db.transactions.delete_many({
-        '$or': [
-            {'payment_id': payment_id},
-            {
-                'student_id': payment['student_id'],
-                'amount': payment['amount'],
-                'description': f"Payment: {event['title']}" if event else 'Event payment'
-            }
-        ]
-    })
+    db.transactions.delete_many({'payment_id': payment_id})
     flash('Payment unlocked', 'success')
     return redirect(url_for('payments', event_id=payment['event_id']))
 
@@ -570,7 +585,7 @@ def reports():
             row['_id']: row['total']
             for row in db.payments.aggregate([
                 {'$match': {'confirmed': True}},
-                {'$group': {'_id': '$student_id', 'total': {'$sum': '$amount'}}}
+                {'$group': {'_id': '$student_id', 'total': {'$sum': '$amount_paid'}}}
             ])
         }
         for row in data:
