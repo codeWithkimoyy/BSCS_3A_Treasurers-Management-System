@@ -333,16 +333,19 @@ def dashboard():
 @login_required
 def events():
     evts = list(db.events.find().sort('created_at', -1))
+    total_students = db.students.count_documents({'is_active': 1})
     for e in evts:
         total_paid = list(db.payments.aggregate([
             {'$match': {'event_id': e['_id'], 'confirmed': True}},
             {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}
         ]))
-        total_students = db.students.count_documents({'is_active': 1})
         paid_count = db.payments.count_documents({'event_id': e['_id'], 'confirmed': True})
+        locked_count = db.payments.count_documents({'event_id': e['_id'], 'locked': True})
+        unpaid = db.payments.count_documents({'event_id': e['_id'], 'locked': {'$ne': True}})
         e['collected'] = total_paid[0]['total'] if total_paid else 0
         e['paid_count'] = paid_count
         e['total_students'] = total_students
+        e['fully_paid'] = locked_count == total_students if total_students > 0 else False
     return render_template('events.html', events=evts)
 
 @app.route('/events/add', methods=['POST'])
@@ -365,6 +368,44 @@ def add_event():
 def close_event(id):
     db.events.update_one({'_id': id}, {'$set': {'status': 'closed'}})
     flash('Event closed', 'success')
+    return redirect(url_for('events'))
+
+@app.route('/events/finalize/<int:id>', methods=['POST'])
+@login_required
+def finalize_event(id):
+    if not can_manage_data():
+        flash('Access denied', 'error')
+        return redirect(url_for('events'))
+    event = db.events.find_one({'_id': id})
+    if not event:
+        flash('Event not found', 'error')
+        return redirect(url_for('events'))
+    allocation = request.form.get('allocation', '')
+    if allocation not in ('balance', 'expense'):
+        flash('Invalid allocation', 'error')
+        return redirect(url_for('events'))
+    total = list(db.payments.aggregate([
+        {'$match': {'event_id': id, 'locked': True}},
+        {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}
+    ]))
+    collected = total[0]['total'] if total else 0
+    if allocation == 'expense' and collected > 0:
+        db.transactions.insert_one({
+            '_id': next_id('transactions'),
+            'type': 'expense',
+            'amount': collected,
+            'description': f"Event allocation: {event.get('title', '')}",
+            'transaction_date': date.today().isoformat(),
+            'created_by': current_user.id,
+            'created_at': datetime.now()
+        })
+    db.events.update_one({'_id': id}, {'$set': {
+        'status': 'closed',
+        'allocation': allocation,
+        'allocated_at': datetime.now(),
+        'allocated_by': current_user.id
+    }})
+    flash(f'Event finalized — funds {"kept in balance" if allocation == "balance" else "recorded as expense"}', 'success')
     return redirect(url_for('events'))
 
 @app.route('/events/delete/<int:id>', methods=['POST'])

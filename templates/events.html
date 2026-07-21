@@ -36,9 +36,36 @@
                 <div style="font-size:.7rem;color:#94a3b8;margin-bottom:.75rem;">
                     ₱{{ "%.2f"|format(e.collected) }} collected of ₱{{ "%.2f"|format(total_target) }} target
                 </div>
-                <div class="mt-auto d-flex gap-1">
+
+                {% if e.fully_paid and not e.allocation %}
+                <div class="p-3 mb-2" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+                    <div style="font-size:.8rem;font-weight:600;color:#065f46;margin-bottom:8px;"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> All students fully paid!</div>
+                    <div style="font-size:.75rem;color:#475569;margin-bottom:8px;">Where should ₱{{ "%.2f"|format(e.collected) }} go?</div>
+                    <div class="d-flex gap-1">
+                        <form method="POST" action="{{ url_for('finalize_event', id=e._id) }}" class="d-inline">
+                            <input type="hidden" name="allocation" value="balance">
+                            <button type="submit" class="btn btn-modern-primary btn-modern-sm" style="font-size:.7rem;padding:.3rem .6rem;"><i class="bi bi-piggy-bank"></i> Keep in Balance</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('finalize_event', id=e._id) }}" class="d-inline">
+                            <input type="hidden" name="allocation" value="expense">
+                            <button type="submit" class="btn btn-modern-outline btn-modern-sm" style="font-size:.7rem;padding:.3rem .6rem;border-color:#fca5a5;color:#dc2626;"><i class="bi bi-arrow-up-right-square"></i> Record as Expense</button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-auto d-flex gap-1 flex-wrap">
+                    {% if e.allocation %}
+                    <span class="badge" style="background:{{ '#d1fae5;color:#065f46' if e.allocation == 'balance' else '#fee2e2;color:#991b1b' }};font-size:.7rem;">
+                        <i class="bi {{ 'bi-piggy-bank' if e.allocation == 'balance' else 'bi-arrow-up-right-square' }}"></i>
+                        {{ 'In Balance' if e.allocation == 'balance' else 'Recorded as Expense' }}
+                    </span>
+                    {% endif %}
+                    {% if e.fully_paid and not e.allocation %}
+                    <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:.7rem;"><i class="bi bi-check-all"></i> Fully Paid</span>
+                    {% endif %}
                     <a href="{{ url_for('payments', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
-                    {% if e.status == 'active' %}
+                    {% if e.status == 'active' and not e.fully_paid %}
                     <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Close this event?')"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
                     {% endif %}
                     <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Delete {{ e.title }} and all its payment records?')"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
