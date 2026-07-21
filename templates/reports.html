@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h3><i class="bi bi-file-earmark-bar-graph"></i> Reports</h3>
+        <div class="subtitle">Financial summaries and analysis</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('reports', type='summary') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='summary' else 'btn-modern-outline' }}">Summary</a>
+        <a href="{{ url_for('reports', type='student') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='student' else 'btn-modern-outline' }}">Per Student</a>
+        <a href="{{ url_for('reports', type='date_range') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='date_range' else 'btn-modern-outline' }}">Date Range</a>
+        <a href="{{ url_for('export') }}" class="btn btn-modern-sm" style="background:linear-gradient(135deg,#059669,#10b981);color:#fff;"><i class="bi bi-download"></i> CSV</a>
+    </div>
+</div>
+
+{% if report_type == 'summary' %}
+<div class="row g-3 mb-3">
+    <div class="col-md-4 animate-in"><div class="stat-card-modern stat-income"><i class="bi bi-arrow-up-circle stat-icon"></i><div class="stat-label">Total Income</div><div class="stat-value">₱{{ "%.2f"|format(income) }}</div></div></div>
+    <div class="col-md-4 animate-in" style="animation-delay:.1s"><div class="stat-card-modern stat-expense"><i class="bi bi-arrow-down-circle stat-icon"></i><div class="stat-label">Total Expenses</div><div class="stat-value">₱{{ "%.2f"|format(expense) }}</div></div></div>
+    <div class="col-md-4 animate-in" style="animation-delay:.2s"><div class="stat-card-modern stat-balance"><i class="bi bi-piggy-bank stat-icon"></i><div class="stat-label">Net Balance</div><div class="stat-value">₱{{ "%.2f"|format(balance) }}</div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6 animate-in" style="animation-delay:.1s">
+        <div class="card-modern h-100">
+            <div class="card-header-modern"><i class="bi bi-table" style="color:var(--accent)"></i> Monthly Summary</div>
+            <div class="card-body-modern p-0">
+                <table class="table table-modern">
+                    <thead><tr><th>Month</th><th style="text-align:right">Income</th><th style="text-align:right">Expense</th><th style="text-align:right">Net</th></tr></thead>
+                    <tbody>
+                        {% for m in monthly %}
+                        <tr><td><strong>{{ m.mon }}</strong></td>
+                            <td style="text-align:right;color:#059669;">₱{{ "%.2f"|format(m.inc) }}</td>
+                            <td style="text-align:right;color:#dc2626;">₱{{ "%.2f"|format(m.exp) }}</td>
+                            <td style="text-align:right;font-weight:700;color:{{ '#059669' if (m.inc - m.exp) >= 0 else '#dc2626' }};">₱{{ "%.2f"|format(m.inc - m.exp) }}</td></tr>
+                        {% endfor %}
+                        {% if not monthly %}
+                        <tr><td colspan="4"><div class="empty-state py-3"><i class="bi bi-bar-chart" style="font-size:1.5rem;"></i><p style="font-size:.8rem;">No monthly data yet</p></div></td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif report_type == 'student' %}
+<div class="card-modern animate-in">
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern datatable">
+                <thead><tr><th>Student ID</th><th>Name</th><th>Course</th><th style="text-align:right">Paid</th><th style="text-align:right">Used</th><th style="text-align:right">Net</th></tr></thead>
+                <tbody>
+                    {% for d in data %}
+                    <tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ d.student_id }}</code></td>
+                        <td><strong>{{ d.name }}</strong></td><td>{{ d.course or '—' }}</td>
+                        <td style="text-align:right;color:#059669;font-weight:600;">₱{{ "%.2f"|format(d.total_paid) }}</td>
+                        <td style="text-align:right;color:#dc2626;font-weight:600;">₱{{ "%.2f"|format(d.total_used) }}</td>
+                        <td style="text-align:right;font-weight:700;color:{{ '#059669' if (d.total_paid - d.total_used) >= 0 else '#dc2626' }};">₱{{ "%.2f"|format(d.total_paid - d.total_used) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not data %}
+                    <tr><td colspan="6"><div class="empty-state"><i class="bi bi-people"></i><p>No student data available</p></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% elif report_type == 'date_range' %}
+<div class="card-modern mb-3 animate-in">
+    <div class="card-body-modern">
+    <form class="row g-2 align-items-end" method="GET" action="{{ url_for('reports') }}">
+        <input type="hidden" name="type" value="date_range">
+        <div class="col-auto"><label class="form-label-modern">From</label></div>
+        <div class="col"><input type="date" name="start" class="form-control form-modern" value="{{ start }}"></div>
+        <div class="col-auto"><label class="form-label-modern">To</label></div>
+        <div class="col"><input type="date" name="end" class="form-control form-modern" value="{{ end }}"></div>
+        <div class="col-auto"><button type="submit" class="btn btn-modern-primary"><i class="bi bi-funnel"></i> Filter</button></div>
+    </form>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-3 flex-wrap animate-in">
+    <span class="badge badge-income fs-6" style="font-size:.85rem!important;padding:.4rem 1rem;">Income: ₱{{ "%.2f"|format(total_inc) }}</span>
+    <span class="badge badge-expense fs-6" style="font-size:.85rem!important;padding:.4rem 1rem;">Expense: ₱{{ "%.2f"|format(total_exp) }}</span>
+    <span class="badge fs-6" style="font-size:.85rem!important;padding:.4rem 1rem;background:linear-gradient(135deg,#4f46e5,#818cf8);color:#fff;">Net: ₱{{ "%.2f"|format(total_inc - total_exp) }}</span>
+</div>
+
+<div class="card-modern animate-in">
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern datatable">
+                <thead><tr><th>Date</th><th>Type</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>Ref</th></tr></thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr><td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
+                        <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ t.type|title }}</span></td>
+                        <td>{{ t.student_name or '—' }}</td>
+                        <td>{{ t.description or '—' }}</td>
+                        <td style="text-align:right;font-weight:600;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">₱{{ "%.2f"|format(t.amount) }}</td>
+                        <td style="font-size:.75rem;">{{ t.reference or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not transactions %}
+                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><p>No transactions in this period</p></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

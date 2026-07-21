@@ -1,0 +1,6 @@
+.env
+__pycache__/
+instance/
+*.pyc
+check.py
+check_live.py

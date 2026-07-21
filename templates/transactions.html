@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h3><i class="bi bi-cash-stack"></i> Transactions</h3>
+        <div class="subtitle">Record and track all financial transactions</div>
+    </div>
+    <button class="btn btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> New Transaction</button>
+</div>
+
+<div class="card-modern animate-in">
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern datatable">
+                <thead><tr><th>Date</th><th>Type</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>By</th><th style="width:50px"></th></tr></thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
+                        <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ 'Income' if t.type=='income' else 'Expense' }}</span></td>
+                        <td>{{ t.student_name or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
+                        <td>{{ t.description or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
+                        <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
+                        <td style="font-size:.75rem;color:#64748b;">{{ t.username or '—' }}</td>
+                        <td><form method="POST" action="{{ url_for('delete_transaction', id=t._id) }}" class="d-inline" onsubmit="return confirm('Delete this transaction?')"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-x"></i></button></form></td>
+                    </tr>
+                    {% endfor %}
+                    {% if not transactions %}
+                    <tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><p>No transactions recorded</p></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-modern" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-plus-circle"></i> New Transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form method="POST" action="{{ url_for('add_transaction') }}">
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label-modern">Transaction Type</label>
+                        <div class="d-flex gap-2 mt-1">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="type" id="typeIncome" value="income" checked onchange="toggleCatType()">
+                                <label class="form-check-label" for="typeIncome" style="font-size:.85rem;color:#059669;"><i class="bi bi-arrow-up-circle"></i> Income</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="type" id="typeExpense" value="expense" onchange="toggleCatType()">
+                                <label class="form-check-label" for="typeExpense" style="font-size:.85rem;color:#dc2626;"><i class="bi bi-arrow-down-circle"></i> Expense</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-modern">Amount (₱)</label>
+                        <input type="number" name="amount" class="form-control form-modern" step="0.01" min="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-modern">Date</label>
+                        <input type="date" name="transaction_date" class="form-control form-modern" value="{{ now.strftime('%Y-%m-%d') }}">
+                    </div>
+                </div>
+                <div class="row g-3 mt-3">
+                    <div class="col-md-4">
+                        <label class="form-label-modern">Student (optional)</label>
+                        <select name="student_id" class="form-control form-modern">
+                            <option value="">— None —</option>
+                            {% for s in students %}<option value="{{ s._id }}">{{ s.name }} ({{ s.student_id }})</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-modern">Payment Method</label>
+                        <select name="payment_method" class="form-control form-modern">
+                            <option value="cash">Cash</option>
+                            <option value="gcash">GCash</option>
+                            <option value="bank">Bank Transfer</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <label class="form-label-modern">Description</label>
+                        <input type="text" name="description" class="form-control form-modern" placeholder="Brief description">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-modern">Reference #</label>
+                        <input type="text" name="reference" class="form-control form-modern" placeholder="OR, receipt, or invoice #">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-modern-primary"><i class="bi bi-check-lg"></i> Record Transaction</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+
+
+{% endblock %}

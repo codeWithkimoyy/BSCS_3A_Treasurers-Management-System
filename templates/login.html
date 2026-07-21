@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<style>
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    padding: 1.5rem;
+    margin: -1.5rem -2rem;
+    position: relative;
+    overflow: hidden;
+}
+.login-page::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,70,229,.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+.login-page::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    left: -5%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,165,233,.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.04);
+    padding: 2.5rem 2rem;
+    position: relative;
+    z-index: 1;
+}
+.login-logo {
+    width: 68px;
+    height: 68px;
+    background: linear-gradient(135deg, #4f46e5, #0ea5e5);
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 8px 32px rgba(79,70,229,.3);
+    margin-bottom: 1rem;
+}
+.login-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: .25rem;
+}
+.login-subtitle {
+    font-size: .85rem;
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+.form-group {
+    margin-bottom: 1.25rem;
+}
+.form-group label {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: .4rem;
+}
+.form-group .form-control {
+    width: 100%;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    padding: .75rem 1rem;
+    font-size: .9rem;
+    transition: all .2s;
+    background: #fff;
+    outline: none;
+}
+.form-group .form-control:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(79,70,229,.1);
+}
+.form-group .form-control::placeholder {
+    color: #94a3b8;
+}
+.login-btn {
+    width: 100%;
+    padding: .8rem;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #4f46e5, #0ea5e5);
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: .5rem;
+}
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(79,70,229,.3);
+}
+.login-btn:active {
+    transform: translateY(0);
+}
+.login-footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: .75rem;
+    color: #94a3b8;
+}
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    width: 100%;
+    padding: .75rem 1rem;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #1e293b;
+    font-size: .9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all .2s;
+    cursor: pointer;
+}
+.google-btn:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    transform: translateY(-1px);
+}
+.google-btn:disabled {
+    opacity: .7;
+    cursor: not-allowed;
+    transform: none;
+}
+</style>
+<div class="login-page">
+    <div class="login-card animate-in">
+        <div class="text-center">
+            <div class="login-logo">₱</div>
+            <div class="login-title">Student Treasurer</div>
+            <div class="login-subtitle">Sign in to manage your organization's finances</div>
+        </div>
+        <form method="POST">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" required autofocus placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;">
+            </div>
+            <button type="submit" class="login-btn">Sign In</button>
+        </form>
+        {% if google_cid %}
+        <div class="divider-text mt-4 mb-3"><span style="color:#94a3b8;font-size:.75rem;white-space:nowrap;">or continue with</span></div>
+        <button id="googleBtn" class="google-btn" onclick="google.accounts.id.prompt()">
+            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.77.87 7.35 2.56 10.56l7.97-5.97z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 5.97C6.51 42.62 14.62 48 24 48z"/></svg>
+            Sign in with Google
+        </button>
+        {% endif %}
+        <div class="login-footer">&copy; {{ current_year }} Student Treasurer System</div>
+    </div>
+</div>
+{% if google_cid %}
+<script src="https://accounts.google.com/gsi/client" async defer onload="initGIS()"></script>
+<script>
+function initGIS() {
+    google.accounts.id.initialize({
+        client_id: '{{ google_cid }}',
+        callback: handleGoogleCredential,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+        hd: 'bisu.edu.ph'
+    });
+    document.getElementById('googleBtn').onclick = function() {
+        google.accounts.id.prompt();
+    };
+}
+function handleGoogleCredential(response) {
+    var btn = document.getElementById('googleBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+    fetch('{{ url_for("google_login") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({credential: response.credential})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) window.location.href = data.redirect;
+        else { alert('Google login failed: ' + (data.error || 'unknown error')); btn.disabled = false; btn.innerHTML = btn.dataset.orig; }
+    })
+    .catch(e => { alert('Google login error: ' + e); btn.disabled = false; btn.innerHTML = btn.dataset.orig; });
+}
+</script>
+{% endif %}
+{% endblock %}

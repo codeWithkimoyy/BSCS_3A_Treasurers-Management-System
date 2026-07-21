@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+        <h3><i class="bi bi-shield-lock"></i> Users & Officers</h3>
+        <div class="subtitle">Manage system access, officer roles, and payment authorization</div>
+    </div>
+    <button class="btn btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> Add User</button>
+</div>
+
+<div class="card-modern mb-4">
+    <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div><h6 class="mb-1"><i class="bi bi-image" style="color:var(--primary)"></i> Application Logo</h6><div class="subtitle">Displayed in the sidebar for all users. Maximum file size: 2 MB.</div></div>
+        <form method="POST" action="{{ url_for('upload_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+            <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="form-control form-modern" required>
+            <button type="submit" class="btn btn-modern-primary btn-modern-sm"><i class="bi bi-upload"></i> Upload</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="stat-card-modern stat-members"><i class="bi bi-people stat-icon"></i><div class="stat-label">Total Accounts</div><div class="stat-value">{{ users|length }}</div><div class="stat-footer">System users</div></div></div>
+    <div class="col-md-4"><div class="stat-card-modern" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);"><i class="bi bi-person-badge stat-icon"></i><div class="stat-label">Active Officers</div><div class="stat-value">{{ officer_count }}</div><div class="stat-footer">Mayor and Treasurer roles</div></div></div>
+    <div class="col-md-4"><div class="stat-card-modern stat-balance"><i class="bi bi-shield-check stat-icon"></i><div class="stat-label">Override Access</div><div class="stat-value">{{ users|selectattr('role','in',['admin','mayor','treasurer'])|list|length }}</div><div class="stat-footer">Authorized payment officers</div></div></div>
+</div>
+
+<div class="card-modern animate-in">
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead><tr><th>Profile</th><th>Username</th><th>Role</th><th>Created</th><th>Assign Role</th></tr></thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr><td><strong>{% if u.picture %}<img src="{{ u.picture }}" alt="" aria-label="Profile photo" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:.4rem;vertical-align:middle;"><span style="display:none;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:.75rem;margin-right:.4rem;vertical-align:middle;">{{ (u.display_name or u.username)[0]|upper }}</span>{% else %}<span style="display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:.75rem;margin-right:.4rem;vertical-align:middle;">{{ (u.display_name or u.username)[0]|upper }}</span>{% endif %}{{ u.display_name or u.username }}{% if u.google_email %}<small style="display:block;color:#94a3b8;margin-left:2.4rem;">{{ u.google_email }}</small>{% endif %}</strong></td>
+                        <td>{{ u.username }}</td>
+                        <td><span class="badge" style="background:{{ {'admin':'#fce7f3;color:#9d174d','mayor':'#ede9fe;color:#6d28d9','treasurer':'#d1fae5;color:#047857'}.get(u.role, '#dbeafe;color:#1e40af') }};">{{ u.role|upper }}</span></td>
+                        <td style="font-size:.8rem;color:#64748b;">{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('assign_user_role', id=u._id) }}" class="d-flex gap-2 align-items-center">
+                                <select name="role" class="form-control form-modern" style="min-width:130px;font-size:.75rem;">
+                                    {% for role in ['staff', 'treasurer', 'mayor', 'admin'] %}
+                                    <option value="{{ role }}" {{ 'selected' if u.role == role }}>{{ role|title }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Assign role"><i class="bi bi-check-lg"></i></button>
+                            </form>
+                        </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-modern" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form method="POST" action="{{ url_for('add_user') }}">
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label-modern">Username</label><input type="text" name="username" class="form-control form-modern" required placeholder="Choose a username"></div>
+                <div class="mb-3"><label class="form-label-modern">Password</label><input type="password" name="password" class="form-control form-modern" required minlength="4"></div>
+                <div class="mb-3"><label class="form-label-modern">Role</label>
+                    <select name="role" class="form-control form-modern">
+                        <option value="staff">Staff (Normal User)</option>
+                        <option value="treasurer">Treasurer</option>
+                        <option value="mayor">Mayor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-modern-primary">Create User</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+{% endblock %}

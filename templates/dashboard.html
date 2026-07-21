@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h3><i class="bi bi-speedometer2"></i> Dashboard</h3>
+        <div class="subtitle">{{ now.strftime('%A, %B %d, %Y') }}</div>
+    </div>
+    {% if can_manage_data() %}<a href="{{ url_for('export') }}" class="btn btn-modern-outline btn-modern-sm"><i class="bi bi-download"></i> Export</a>{% endif %}
+</div>
+
+{% if not can_manage_data() %}
+<div class="alert alert-info d-flex align-items-center gap-2 mb-4" role="status">
+    <i class="bi bi-bar-chart-line"></i>
+    <span><strong>Read-only overview:</strong> You can view treasury statistics, confirmed payments, and reports.</span>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4 col-6 animate-in">
+        <div class="stat-card-modern stat-income">
+            <i class="bi bi-arrow-up-circle stat-icon"></i>
+            <div class="stat-label">Total Income</div>
+            <div class="stat-value counter" data-target="{{ income }}">₱0</div>
+            <div class="stat-footer">All time collections</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6 animate-in" style="animation-delay:.1s">
+        <div class="stat-card-modern stat-expense">
+            <i class="bi bi-arrow-down-circle stat-icon"></i>
+            <div class="stat-label">Total Expenses</div>
+            <div class="stat-value counter" data-target="{{ expense }}">₱0</div>
+            <div class="stat-footer">All time spending</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6 animate-in" style="animation-delay:.2s">
+        <div class="stat-card-modern stat-balance">
+            <i class="bi bi-piggy-bank stat-icon"></i>
+            <div class="stat-label">Current Balance</div>
+            <div class="stat-value counter" data-target="{{ balance }}">₱0</div>
+            <div class="stat-footer">{{ "Net positive" if balance >= 0 else "Net deficit" }}</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6 animate-in" style="animation-delay:.3s">
+        <div class="stat-card-modern stat-members">
+            <i class="bi bi-people stat-icon"></i>
+            <div class="stat-label">Active Members</div>
+            <div class="stat-value">{{ member_count }}</div>
+            <div class="stat-footer">Registered students</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6 animate-in" style="animation-delay:.35s">
+        <div class="stat-card-modern" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
+            <i class="bi bi-calendar-event stat-icon"></i>
+            <div class="stat-label">Active Events</div>
+            <div class="stat-value">{{ event_count }}</div>
+            <div class="stat-footer">Collection drives</div>
+        </div>
+    </div>
+    <div class="col-md-4 col-6 animate-in" style="animation-delay:.4s">
+        <div class="stat-card-modern" style="background:linear-gradient(135deg,#0891b2,#22d3ee);">
+            <i class="bi bi-hourglass-split stat-icon"></i>
+            <div class="stat-label">Pending Payments</div>
+            <div class="stat-value">{{ pending_payments }}</div>
+            <div class="stat-footer">Awaiting confirmation</div>
+        </div>
+    </div>
+</div>
+{% if can_manage_data() %}<div class="row g-3 mb-4">
+    <div class="col-12 animate-in" style="animation-delay:.45s">
+        <div class="card-modern" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;">
+            <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h5 class="mb-1 fw-bold" style="color:#fff;"><i class="bi bi-credit-card"></i> Quick Collect</h5>
+                    <p class="mb-0" style="color:rgba(255,255,255,.6);font-size:.85rem;">Select an active event and mark students as paid</p>
+                </div>
+                <a href="{{ url_for('payments') }}" class="btn" style="background:#fff;color:#312e81;font-weight:700;border-radius:12px;padding:.6rem 1.5rem;">
+                    <i class="bi bi-arrow-right"></i> Go to Payments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>{% endif %}
+
+<div class="card-modern animate-in mb-4" style="animation-delay:.45s">
+    <div class="card-header-modern"><i class="bi bi-check2-circle" style="color:var(--accent)"></i> Recent Payments</div>
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead><tr><th>Student</th><th>Event</th><th style="text-align:right">Amount</th><th>Date</th><th>Notes</th></tr></thead>
+                <tbody>
+                    {% for p in recent_payments %}
+                    <tr>
+                        <td><strong>{{ p.student_name }}</strong></td>
+                        <td>{{ p.event_title }}</td>
+                        <td style="text-align:right;font-weight:700;color:var(--accent);">₱{{ "%.2f"|format(p.amount) }}</td>
+                        <td style="font-size:.8rem;color:#64748b;">{{ p.confirmed_at.strftime('%b %d, %I:%M %p') if p.confirmed_at else '—' }}</td>
+                        <td style="font-size:.8rem;color:#64748b;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.notes or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not recent_payments %}
+                    <tr><td colspan="5"><div class="empty-state"><i class="bi bi-inbox"></i><p>No payments confirmed yet</p><a href="{{ url_for('payments') }}" class="btn btn-modern-primary btn-modern-sm">Collect Payments</a></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 animate-in" style="animation-delay:.15s">
+        <div class="card-modern">
+            <div class="card-header-modern"><i class="bi bi-pie-chart" style="color:var(--primary)"></i> Income vs Expense Breakdown</div>
+            <div class="card-body-modern">
+                <div class="chart-container">{% if chart %}<img src="data:image/png;base64,{{ chart }}" alt="chart">{% else %}<div class="empty-state"><i class="bi bi-bar-chart"></i><p>No data yet</p></div>{% endif %}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 animate-in" style="animation-delay:.25s">
+        <div class="card-modern">
+            <div class="card-header-modern"><i class="bi bi-graph-up" style="color:var(--accent)"></i> Monthly Trend</div>
+            <div class="card-body-modern">
+                <div class="chart-container">{% if trend_chart %}<img src="data:image/png;base64,{{ trend_chart }}" alt="trend">{% else %}<div class="empty-state"><i class="bi bi-bar-chart"></i><p>Not enough data for trend</p></div>{% endif %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-modern animate-in" style="animation-delay:.3s">
+    <div class="card-header-modern"><i class="bi bi-clock-history" style="color:var(--primary)"></i> Recent Ledger Activity</div>
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern">
+                <thead><tr><th>Date</th><th>Student</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
+                <tbody>
+                    {% for t in recent %}
+                    <tr>
+                        <td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
+                        <td>{{ t.student_name or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
+                        <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ 'Income' if t.type=='income' else 'Expense' }}</span></td>
+                        <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not recent %}
+                    <tr><td colspan="4"><div class="empty-state"><i class="bi bi-inbox"></i><p>No separate ledger transactions recorded yet</p><a href="{{ url_for('transactions') }}" class="btn btn-modern-primary btn-modern-sm">Add Transaction</a></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const counters = document.querySelectorAll('.counter');
+    counters.forEach(c => {
+        const target = parseFloat(c.dataset.target);
+        if (target === 0) { c.textContent = '₱0.00'; return; }
+        const duration = 1000;
+        const start = performance.now();
+        const step = (ts) => {
+            const p = Math.min((ts - start) / duration, 1);
+            const val = target * easeOutCubic(p);
+            c.textContent = '₱' + val.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    });
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+});
+</script>
+{% endblock %}

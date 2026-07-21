@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h3><i class="bi bi-calendar-event"></i> Events</h3>
+        <div class="subtitle">Create collection events with custom fees and deadlines</div>
+    </div>
+    <button class="btn btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> New Event</button>
+</div>
+
+<div class="row g-3">
+    {% for e in events %}
+    <div class="col-md-6 col-lg-4 animate-in">
+        <div class="card-modern h-100">
+            <div class="card-body-modern d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="mb-0" style="font-size:1rem;font-weight:700;">{{ e.title }}</h5>
+                    <span class="badge" style="background:{{ '#d1fae5;color:#065f46' if e.status=='active' else '#f1f5f9;color:#94a3b8' }};">{{ e.status|title }}</span>
+                </div>
+                <div class="mb-3">
+                    <div style="font-size:1.4rem;font-weight:800;color:var(--primary);">₱{{ "%.2f"|format(e.amount) }}</div>
+                    {% if e.deadline %}
+                    <div style="font-size:.75rem;color:#64748b;margin-top:2px;"><i class="bi bi-clock"></i> Deadline: {{ e.deadline }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between mb-1" style="font-size:.75rem;">
+                    <span style="color:#64748b;">Collection</span>
+                    <span><strong>{{ e.paid_count }}</strong> / {{ e.total_students }} students</span>
+                </div>
+                <div class="progress-modern mb-1">
+                    <div class="progress-bar-modern" style="width:{{ (e.paid_count / e.total_students * 100) if e.total_students > 0 else 0 }}%"></div>
+                </div>
+                <div style="font-size:.7rem;color:#94a3b8;margin-bottom:.75rem;">
+                    ₱{{ "%.2f"|format(e.collected) }} collected of ₱{{ "%.2f"|format(e.amount * e.total_students) }} target
+                </div>
+                <div class="mt-auto d-flex gap-1">
+                    <a href="{{ url_for('payments', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
+                    {% if e.status == 'active' %}
+                    <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Close this event?')"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Delete {{ e.title }} and all its payment records?')"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if not events %}
+    <div class="col-12 animate-in">
+        <div class="card-modern"><div class="card-body-modern"><div class="empty-state"><i class="bi bi-calendar-plus"></i><p>No events yet. Create your first collection event!</p></div></div></div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="modal fade modal-modern" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-calendar-plus"></i> New Collection Event</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <form method="POST" action="{{ url_for('add_event') }}">
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label-modern">Event Title</label><input type="text" name="title" class="form-control form-modern" required placeholder="e.g. Field Trip, Organization Fee"></div>
+                <div class="row g-2">
+                    <div class="col"><div class="mb-3"><label class="form-label-modern">Amount to Pay (₱)</label><input type="number" name="amount" class="form-control form-modern" step="0.01" min="0.01" required placeholder="150.00"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern">Deadline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input type="date" name="deadline" class="form-control form-modern"></div></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-modern-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-modern-primary">Create Event</button>
+            </div>
+        </form>
+    </div></div>
+</div>
+{% endblock %}
