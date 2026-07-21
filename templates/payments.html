@@ -76,7 +76,7 @@
                                 <div class="d-flex align-items-center gap-1">
                                     <span style="font-size:.8rem;color:#64748b;">₱</span>
                                     <input type="hidden" name="student_ids" value="{{ s._id }}">
-                                    <input type="number" name="amounts" value="{{ '%.2f'|format(remaining) }}" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0">
+                                    <input type="number" name="amounts" value="0" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0">
                                 </div>
                                 {% else %}
                                 <span style="color:#94a3b8;">—</span>
