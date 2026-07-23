@@ -25,7 +25,7 @@
                         <td><span class="badge" style="background:{{ '#d1fae5;color:#065f46' if s.is_active else '#f1f5f9;color:#94a3b8' }};">{{ 'Active' if s.is_active else 'Inactive' }}</span></td>
                         <td>
                             <button class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ s._id }}" title="Edit"><i class="bi bi-pencil"></i></button>
-                            <form method="POST" action="{{ url_for('delete_student', id=s._id) }}" class="d-inline" onsubmit="return confirm('Remove {{ s.name }}? This cannot be undone.')"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                            <form method="POST" action="{{ url_for('delete_student', id=s._id) }}" class="d-inline" onsubmit="return confirm('Remove {{ s.name }}? This cannot be undone.')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
                         </td>
                     </tr>
                     {% endfor %}
@@ -42,6 +42,7 @@
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Add Student</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('add_student') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label-modern">Student ID</label><input type="text" name="student_id" class="form-control form-modern" required placeholder="e.g. 2024-0001"></div>
                 <div class="mb-3"><label class="form-label-modern">Full Name</label><input type="text" name="name" class="form-control form-modern" required placeholder="Last, First Middle"></div>
@@ -64,6 +65,7 @@
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Student</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('edit_student', id=s._id) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label-modern">Full Name</label><input type="text" name="name" class="form-control form-modern" value="{{ s.name }}" required></div>
                 <div class="row g-2">

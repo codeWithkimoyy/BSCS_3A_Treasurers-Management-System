@@ -13,6 +13,7 @@
     <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div><h6 class="mb-1"><i class="bi bi-image" style="color:var(--primary)"></i> Application Logo</h6><div class="subtitle">Displayed in the sidebar for all users. Maximum file size: 2 MB.</div></div>
         <form method="POST" action="{{ url_for('upload_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="form-control form-modern" required>
             <button type="submit" class="btn btn-modern-primary btn-modern-sm"><i class="bi bi-upload"></i> Upload</button>
         </form>
@@ -38,6 +39,7 @@
                         <td style="font-size:.8rem;color:#64748b;">{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}</td>
                         <td>
                             <form method="POST" action="{{ url_for('assign_user_role', id=u._id) }}" class="d-flex gap-2 align-items-center">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                 <select name="role" class="form-control form-modern" style="min-width:130px;font-size:.75rem;">
                                     {% for role in ['staff', 'treasurer', 'mayor', 'admin'] %}
                                     <option value="{{ role }}" {{ 'selected' if u.role == role }}>{{ role|title }}</option>
@@ -57,6 +59,7 @@
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('add_user') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label-modern">Username</label><input type="text" name="username" class="form-control form-modern" required placeholder="Choose a username"></div>
                 <div class="mb-3"><label class="form-label-modern">Password</label><input type="password" name="password" class="form-control form-modern" required minlength="4"></div>

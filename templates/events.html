@@ -43,10 +43,12 @@
                     <div style="font-size:.75rem;color:#475569;margin-bottom:8px;">Where should ₱{{ "%.2f"|format(e.collected) }} go?</div>
                     <div class="d-flex gap-1">
                         <form method="POST" action="{{ url_for('finalize_event', id=e._id) }}" class="d-inline">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="allocation" value="balance">
                             <button type="submit" class="btn btn-modern-primary btn-modern-sm" style="font-size:.7rem;padding:.3rem .6rem;"><i class="bi bi-piggy-bank"></i> Keep in Balance</button>
                         </form>
                         <form method="POST" action="{{ url_for('finalize_event', id=e._id) }}" class="d-inline">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="allocation" value="expense">
                             <button type="submit" class="btn btn-modern-outline btn-modern-sm" style="font-size:.7rem;padding:.3rem .6rem;border-color:#fca5a5;color:#dc2626;"><i class="bi bi-arrow-up-right-square"></i> Record as Expense</button>
                         </form>
@@ -66,9 +68,9 @@
                     {% endif %}
                     <a href="{{ url_for('payments', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
                     {% if e.status == 'active' and not e.fully_paid %}
-                    <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Close this event?')"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
+                    <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Close this event?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
                     {% endif %}
-                    <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Delete {{ e.title }} and all its payment records?')"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                    <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Delete {{ e.title }} and all its payment records?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
                 </div>
             </div>
         </div>
@@ -85,6 +87,7 @@
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-calendar-plus"></i> New Collection Event</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('add_event') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label-modern">Event Title</label><input type="text" name="title" class="form-control form-modern" required placeholder="e.g. Field Trip, Organization Fee"></div>
                 <div class="row g-2">

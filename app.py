@@ -1,11 +1,17 @@
 import os
+import re
+import time
+import hashlib
+import hmac
 from datetime import datetime, date, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session, abort, g
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from pymongo import MongoClient
-from dotenv import load_dotenv, set_key
+from dotenv import load_dotenv
 import io
 import csv
 import matplotlib
@@ -19,15 +25,35 @@ ENV_PATH = Path(__file__).parent / '.env'
 load_dotenv(ENV_PATH)
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24).hex()
 app.config['MONGO_URI'] = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/student_treasury')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True
+
+if os.environ.get('SESSION_COOKIE_DOMAIN'):
+    app.config['SESSION_COOKIE_DOMAIN'] = os.environ.get('SESSION_COOKIE_DOMAIN')
 
 os.makedirs(app.instance_path, exist_ok=True)
 
-client = MongoClient(app.config['MONGO_URI'], serverSelectionTimeoutMS=10000, tls=True, tlsInsecure=True)
+client = MongoClient(
+    app.config['MONGO_URI'],
+    serverSelectionTimeoutMS=10000,
+    tls=True,
+    tlsAllowInvalidCertificates=False
+)
 db = client.get_database()
+
+LOGIN_RATE_LIMIT = 10
+LOGIN_WINDOW = 300
+_login_attempts = {}
+
+AUTO_ACTIVATE_ACCOUNT = os.environ.get('AUTO_ACTIVATE_ACCOUNT', 'false').lower() == 'true'
+DEFAULT_ADMIN_USERNAME = os.environ.get('DEFAULT_ADMIN_USERNAME', '')
+DEFAULT_ADMIN_PASSWORD = os.environ.get('DEFAULT_ADMIN_PASSWORD', '')
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -36,6 +62,45 @@ login_manager.login_view = 'login'
 plt.rcParams['font.family'] = 'sans-serif'
 
 ROLES = ['admin', 'mayor', 'treasurer', 'staff']
+
+def generate_csrf_token():
+    if '_csrf_token' not in session:
+        session['_csrf_token'] = secrets.token_hex(32)
+    return session['_csrf_token']
+
+def validate_csrf():
+    token = session.get('_csrf_token')
+    submitted = request.form.get('_csrf_token') or request.headers.get('X-CSRF-Token')
+    if not token or not submitted or not hmac.compare_digest(token, submitted):
+        abort(403)
+
+def rate_limit(key_prefix, max_attempts=LOGIN_RATE_LIMIT, window=LOGIN_WINDOW):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            now = time.time()
+            ip = request.remote_addr or 'unknown'
+            rl_key = f"{key_prefix}:{ip}"
+            _login_attempts.setdefault(rl_key, [])
+            _login_attempts[rl_key] = [t for t in _login_attempts[rl_key] if now - t < window]
+            if len(_login_attempts[rl_key]) >= max_attempts:
+                return jsonify({'error': 'Too many attempts. Try again later.'}), 429
+            _login_attempts[rl_key].append(now)
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def inject_security_headers(resp):
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['X-Frame-Options'] = 'DENY'
+    resp.headers['X-XSS-Protection'] = '0'
+    resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    resp.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    resp.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com;"
+    return resp
+
+app.after_request(inject_security_headers)
 
 def format_name(raw):
     raw = raw.strip()
@@ -75,11 +140,11 @@ def init_db():
         for c in ['users', 'students', 'transactions', 'events', 'payments']:
             db.counters.insert_one({'_id': c, 'seq': 1})
 
-    if db.users.count_documents({}) == 0:
+    if db.users.count_documents({}) == 0 and AUTO_ACTIVATE_ACCOUNT and DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD:
         db.users.insert_one({
             '_id': next_id('users'),
-            'username': 'admin',
-            'password': generate_password_hash('admin123'),
+            'username': DEFAULT_ADMIN_USERNAME,
+            'password': generate_password_hash(DEFAULT_ADMIN_PASSWORD),
             'role': 'admin',
             'created_at': datetime.now()
         })
@@ -167,20 +232,24 @@ def load_user(user_id):
 
 @app.context_processor
 def inject_now():
-    return {'now': datetime.now(), 'current_year': datetime.now().year, 'can_override': can_override, 'can_manage_data': can_manage_data, 'google_cid': app.config['GOOGLE_CLIENT_ID'], 'has_logo': logo_file() is not None}
+    return {'now': datetime.now(), 'current_year': datetime.now().year, 'can_override': can_override, 'can_manage_data': can_manage_data, 'google_cid': app.config['GOOGLE_CLIENT_ID'], 'has_logo': logo_file() is not None, 'csrf_token': generate_csrf_token()}
 
 @app.route('/login', methods=['GET', 'POST'])
+@rate_limit('login')
 def login():
     if request.method == 'POST':
+        validate_csrf()
         user = db.users.find_one({'username': request.form['username']})
         if user and check_password_hash(user['password'], request.form['password']):
             login_user(User(user['_id'], user['username'], user['role'], user.get('display_name'), user.get('google_email'), user.get('picture')))
+            session.pop('_csrf_token', None)
             return redirect(url_for('dashboard'))
-        flash('Invalid credentials', 'error')
-    return render_template('login.html')
+        flash('Invalid username or password', 'error')
+    return render_template('login.html', csrf_token=generate_csrf_token())
 
 @app.route('/login/google', methods=['POST'])
 def google_login():
+    validate_csrf()
     if not app.config['GOOGLE_CLIENT_ID']:
         return jsonify({'error': 'Google not configured'}), 400
     try:
@@ -351,6 +420,7 @@ def events():
 @app.route('/events/add', methods=['POST'])
 @login_required
 def add_event():
+    validate_csrf()
     db.events.insert_one({
         '_id': next_id('events'),
         'title': request.form['title'],
@@ -366,6 +436,7 @@ def add_event():
 @app.route('/events/close/<int:id>', methods=['POST'])
 @login_required
 def close_event(id):
+    validate_csrf()
     db.events.update_one({'_id': id}, {'$set': {'status': 'closed'}})
     flash('Event closed', 'success')
     return redirect(url_for('events'))
@@ -373,6 +444,7 @@ def close_event(id):
 @app.route('/events/finalize/<int:id>', methods=['POST'])
 @login_required
 def finalize_event(id):
+    validate_csrf()
     if not can_manage_data():
         flash('Access denied', 'error')
         return redirect(url_for('events'))
@@ -411,6 +483,7 @@ def finalize_event(id):
 @app.route('/events/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_event(id):
+    validate_csrf()
     db.payments.delete_many({'event_id': id})
     db.events.delete_one({'_id': id})
     flash('Event deleted', 'success')
@@ -443,6 +516,7 @@ def payments():
 @app.route('/payments/confirm', methods=['POST'])
 @login_required
 def confirm_payments():
+    validate_csrf()
     if not can_manage_data():
         flash('Read-only accounts cannot confirm payments', 'error')
         return redirect(url_for('payments'))
@@ -525,6 +599,7 @@ def confirm_payments():
 @app.route('/payments/unconfirm/<int:payment_id>', methods=['POST'])
 @login_required
 def unconfirm_payment(payment_id):
+    validate_csrf()
     if not can_override():
         flash('Access denied. Only admin, mayor, or treasurer can override.', 'error')
         return redirect(url_for('payments'))
@@ -552,6 +627,7 @@ def students():
 @app.route('/students/add', methods=['POST'])
 @login_required
 def add_student():
+    validate_csrf()
     try:
         db.students.insert_one({
             '_id': next_id('students'), 'student_id': request.form['student_id'],
@@ -567,6 +643,7 @@ def add_student():
 @app.route('/students/edit/<int:id>', methods=['POST'])
 @login_required
 def edit_student(id):
+    validate_csrf()
     db.students.update_one({'_id': id}, {'$set': {
         'name': format_name(request.form['name']), 'course': request.form.get('course',''),
         'year': request.form.get('year',''), 'email': request.form.get('email',''),
@@ -578,6 +655,7 @@ def edit_student(id):
 @app.route('/students/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_student(id):
+    validate_csrf()
     db.students.delete_one({'_id': id})
     flash('Student removed', 'success')
     return redirect(url_for('students'))
@@ -603,6 +681,7 @@ def transactions():
 @app.route('/transactions/add', methods=['POST'])
 @login_required
 def add_transaction():
+    validate_csrf()
     txn_id = next_id('transactions')
     receipt = f"RCP-{date.today().strftime('%Y%m%d')}-{txn_id:04d}"
     db.transactions.insert_one({
@@ -624,6 +703,7 @@ def add_transaction():
 @app.route('/transactions/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_transaction(id):
+    validate_csrf()
     db.transactions.delete_one({'_id': id})
     flash('Transaction deleted', 'success')
     return redirect(url_for('transactions'))
@@ -713,6 +793,7 @@ def users():
 @app.route('/admin/logo', methods=['POST'])
 @login_required
 def upload_logo():
+    validate_csrf()
     if current_user.role != 'admin':
         flash('Access denied', 'error')
         return redirect(url_for('dashboard'))
@@ -743,6 +824,7 @@ def app_logo():
 @app.route('/users/add', methods=['POST'])
 @login_required
 def add_user():
+    validate_csrf()
     if current_user.role != 'admin':
         flash('Access denied', 'error'); return redirect(url_for('dashboard'))
     role = request.form.get('role', 'staff').lower()
@@ -759,6 +841,7 @@ def add_user():
 @app.route('/users/<int:id>/role', methods=['POST'])
 @login_required
 def assign_user_role(id):
+    validate_csrf()
     if current_user.role != 'admin':
         flash('Access denied', 'error')
         return redirect(url_for('dashboard'))

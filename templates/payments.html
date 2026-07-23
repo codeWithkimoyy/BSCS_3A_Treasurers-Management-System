@@ -43,6 +43,7 @@
     </div>
     <div class="card-body-modern p-0">
         {% if can_manage_data() %}<form method="POST" action="{{ url_for('confirm_payments') }}" id="paymentForm">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="event_id" value="{{ event._id }}">
         {% endif %}
             <div class="table-responsive">
@@ -137,6 +138,7 @@
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-unlock"></i> Override Payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('unconfirm_payment', payment_id=payment._id) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <p style="font-size:.9rem;">Unlock and reset payment for <strong>{{ s.name }}</strong>?</p>
                 <p style="font-size:.8rem;color:#64748b;">This will reset their paid amount to ₱0. Only admins, mayors, and treasurers can do this.</p>

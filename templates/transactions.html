@@ -24,7 +24,7 @@
                         <td>{{ t.description or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
                         <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
                         <td style="font-size:.75rem;color:#64748b;">{{ t.username or '—' }}</td>
-                        <td><form method="POST" action="{{ url_for('delete_transaction', id=t._id) }}" class="d-inline" onsubmit="return confirm('Delete this transaction?')"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-x"></i></button></form></td>
+                        <td><form method="POST" action="{{ url_for('delete_transaction', id=t._id) }}" class="d-inline" onsubmit="return confirm('Delete this transaction?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-x"></i></button></form></td>
                     </tr>
                     {% endfor %}
                     {% if not transactions %}
@@ -40,6 +40,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-plus-circle"></i> New Transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
         <form method="POST" action="{{ url_for('add_transaction') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="row g-3">
                     <div class="col-md-4">

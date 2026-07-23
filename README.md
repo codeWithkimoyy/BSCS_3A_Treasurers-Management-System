@@ -51,7 +51,7 @@ SECRET_KEY=your-random-secret-key
 python app.py
 ```
 
-5. Visit `http://localhost:5000` — default admin login: `admin` / `admin123`
+5. Visit `http://localhost:5000` — register your own admin account via the `DEFAULT_ADMIN_USERNAME` / `DEFAULT_ADMIN_PASSWORD` env vars or through Google OAuth
 
 ## Environment Variables
 
