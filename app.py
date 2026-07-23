@@ -433,6 +433,18 @@ def add_event():
     flash('Event created', 'success')
     return redirect(url_for('events'))
 
+@app.route('/events/edit/<int:id>', methods=['POST'])
+@login_required
+def edit_event(id):
+    validate_csrf()
+    db.events.update_one({'_id': id}, {'$set': {
+        'title': request.form['title'],
+        'amount': float(request.form['amount']),
+        'deadline': request.form.get('deadline', '')
+    }})
+    flash('Event updated', 'success')
+    return redirect(url_for('events'))
+
 @app.route('/events/close/<int:id>', methods=['POST'])
 @login_required
 def close_event(id):
