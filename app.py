@@ -97,7 +97,7 @@ def inject_security_headers(resp):
     resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     resp.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    resp.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com; frame-src https://accounts.google.com;"
+    resp.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com;"
     return resp
 
 app.after_request(inject_security_headers)
