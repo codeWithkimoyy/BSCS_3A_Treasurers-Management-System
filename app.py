@@ -160,14 +160,7 @@ def get_chart_base64(fig):
 ALLOWED_LOGO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
 def logo_file():
-    for extension in ALLOWED_LOGO_EXTENSIONS:
-        candidate = Path(app.instance_path) / f'app_logo.{extension}'
-        if candidate.exists():
-            return candidate
-    default = Path(app.static_folder) / 'logo.png'
-    if default.exists():
-        return default
-    return None
+    return Path(app.static_folder) / 'logo.png'
 
 def get_financial_totals():
     """Return canonical totals without counting payment ledger rows twice."""
