@@ -1,6 +1,6 @@
 .env
 __pycache__/
 instance/
+scripts/check.py
+scripts/check_live.py
 *.pyc
-check.py
-check_live.py

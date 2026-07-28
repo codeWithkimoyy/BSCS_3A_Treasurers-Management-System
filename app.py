@@ -164,6 +164,9 @@ def logo_file():
         candidate = Path(app.instance_path) / f'app_logo.{extension}'
         if candidate.exists():
             return candidate
+    default = Path(app.static_folder) / 'logo.png'
+    if default.exists():
+        return default
     return None
 
 def get_financial_totals():
