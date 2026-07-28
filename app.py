@@ -319,9 +319,15 @@ def dashboard():
 
     recent = list(db.transactions.aggregate([
         {'$sort': {'created_at': -1}}, {'$limit': 5},
-        {'$lookup': {'from': 'students', 'localField': 'student_id', 'foreignField': '_id', 'as': 'student'}},
-        {'$unwind': {'path': '$student', 'preserveNullAndEmptyArrays': True}},
-        {'$project': {'transaction_date': 1, 'type': 1, 'amount': 1, 'student_name': '$student.name'}}
+        {'$addFields': {
+            'lookup_ids': {'$cond': [
+                {'$and': [{'$isArray': '$student_ids'}, {'$gt': [{'$size': '$student_ids'}, 0]}]},
+                '$student_ids',
+                {'$cond': [{'$ne': ['$student_id', None]}, ['$student_id'], []]}
+            ]}
+        }},
+        {'$lookup': {'from': 'students', 'localField': 'lookup_ids', 'foreignField': '_id', 'as': 'students'}},
+        {'$project': {'transaction_date': 1, 'type': 1, 'amount': 1, 'student_names': '$students.name'}}
     ]))
 
     recent_payments = list(db.payments.aggregate([
@@ -676,11 +682,17 @@ def transactions():
     total = db.transactions.count_documents({})
     txn = list(db.transactions.aggregate([
         {'$sort': {'created_at': -1}}, {'$skip': skip}, {'$limit': per_page},
-        {'$lookup': {'from': 'students', 'localField': 'student_id', 'foreignField': '_id', 'as': 'student'}},
+        {'$addFields': {
+            'lookup_ids': {'$cond': [
+                {'$and': [{'$isArray': '$student_ids'}, {'$gt': [{'$size': '$student_ids'}, 0]}]},
+                '$student_ids',
+                {'$cond': [{'$ne': ['$student_id', None]}, ['$student_id'], []]}
+            ]}
+        }},
+        {'$lookup': {'from': 'students', 'localField': 'lookup_ids', 'foreignField': '_id', 'as': 'students'}},
         {'$lookup': {'from': 'users', 'localField': 'created_by', 'foreignField': '_id', 'as': 'user'}},
-        {'$unwind': {'path': '$student', 'preserveNullAndEmptyArrays': True}},
         {'$unwind': {'path': '$user', 'preserveNullAndEmptyArrays': True}},
-        {'$project': {'transaction_date': 1, 'type': 1, 'amount': 1, 'description': 1, 'reference': 1, 'receipt': 1, 'payment_method': 1, 'created_at': 1, 'student_name': '$student.name', 'username': '$user.username'}}
+        {'$project': {'transaction_date': 1, 'type': 1, 'amount': 1, 'description': 1, 'reference': 1, 'receipt': 1, 'payment_method': 1, 'created_at': 1, 'student_names': '$students.name', 'username': '$user.username'}}
     ]))
     return render_template('transactions.html', transactions=txn,
         students=list(db.students.find({'is_active': 1}).sort('name', 1)),
@@ -692,9 +704,11 @@ def add_transaction():
     validate_csrf()
     txn_id = next_id('transactions')
     receipt = f"RCP-{date.today().strftime('%Y%m%d')}-{txn_id:04d}"
+    student_ids_raw = request.form.getlist('student_ids')
+    student_ids = [int(s) for s in student_ids_raw if s.strip()]
     db.transactions.insert_one({
         '_id': txn_id,
-        'student_id': int(request.form.get('student_id')) if request.form.get('student_id') else None,
+        'student_ids': student_ids if student_ids else None,
         'amount': float(request.form['amount']),
         'type': request.form['type'],
         'description': request.form.get('description',''),

@@ -136,7 +136,7 @@
                     {% for t in recent %}
                     <tr>
                         <td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
-                        <td>{{ t.student_name or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
+                        <td>{% if t.student_names %}{{ t.student_names|join(', ') }}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
                         <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ 'Income' if t.type=='income' else 'Expense' }}</span></td>
                         <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
                     </tr>

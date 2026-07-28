@@ -20,7 +20,7 @@
                         <td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
                         <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ 'Income' if t.type=='income' else 'Expense' }}</span></td>
                         <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.7rem;">{{ t.receipt or t.reference or '—' }}</code></td>
-                        <td>{{ t.student_name or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
+                        <td>{% if t.student_names %}{{ t.student_names|join(', ') }}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
                         <td>{{ t.description or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
                         <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
                         <td style="font-size:.75rem;color:#64748b;">{{ t.username or '—' }}</td>
@@ -67,9 +67,8 @@
                 </div>
                 <div class="row g-3 mt-3">
                     <div class="col-md-4">
-                        <label class="form-label-modern">Student (optional)</label>
-                        <select name="student_id" class="form-control form-modern">
-                            <option value="">— None —</option>
+                        <label class="form-label-modern">Students <span style="color:#94a3b8;font-weight:400;">(optional, multiple)</span></label>
+                        <select name="student_ids" class="form-control form-modern student-select" multiple>
                             {% for s in students %}<option value="{{ s._id }}">{{ s.name }} ({{ s.student_id }})</option>{% endfor %}
                         </select>
                     </div>
