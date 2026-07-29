@@ -47,9 +47,12 @@ client = MongoClient(
 )
 db = client.get_database()
 
-LOGIN_RATE_LIMIT = 10
+LOGIN_RATE_LIMIT = 5
 LOGIN_WINDOW = 300
+GENERAL_RATE_LIMIT = 60
+GENERAL_WINDOW = 300
 _login_attempts = {}
+_action_attempts = {}
 
 AUTO_ACTIVATE_ACCOUNT = os.environ.get('AUTO_ACTIVATE_ACCOUNT', 'false').lower() == 'true'
 DEFAULT_ADMIN_USERNAME = os.environ.get('DEFAULT_ADMIN_USERNAME', '')
@@ -84,20 +87,80 @@ def rate_limit(key_prefix, max_attempts=LOGIN_RATE_LIMIT, window=LOGIN_WINDOW):
             _login_attempts.setdefault(rl_key, [])
             _login_attempts[rl_key] = [t for t in _login_attempts[rl_key] if now - t < window]
             if len(_login_attempts[rl_key]) >= max_attempts:
-                return jsonify({'error': 'Too many attempts. Try again later.'}), 429
+                resp = jsonify({'error': 'Too many attempts. Try again later.'})
+                resp.status_code = 429
+                resp.headers['Retry-After'] = str(window)
+                return resp
             _login_attempts[rl_key].append(now)
             return f(*args, **kwargs)
         return wrapper
     return decorator
 
+@app.before_request
+def general_rate_limit():
+    if request.method == 'POST' and request.endpoint != 'static':
+        now = time.time()
+        ip = request.remote_addr or 'unknown'
+        key = f"general:{ip}"
+        _action_attempts.setdefault(key, [])
+        _action_attempts[key] = [t for t in _action_attempts[key] if now - t < GENERAL_WINDOW]
+        if len(_action_attempts[key]) >= GENERAL_RATE_LIMIT:
+            resp = jsonify({'error': 'Too many requests. Try again later.', 'retry_after': GENERAL_WINDOW})
+            resp.status_code = 429
+            resp.headers['Retry-After'] = str(GENERAL_WINDOW)
+            return resp
+        _action_attempts[key].append(now)
+
+@app.context_processor
+def inject_globals():
+    g.csp_nonce = secrets.token_urlsafe(16)
+    return {'csp_nonce': g.csp_nonce}
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('errors.html', code=404, message='Page not found'), 404
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('errors.html', code=403, message='Access denied'), 403
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return render_template('errors.html', code=405, message='Method not allowed'), 405
+
+@app.errorhandler(429)
+def too_many(e):
+    return render_template('errors.html', code=429, message='Too many requests'), 429
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('errors.html', code=500, message='Internal server error'), 500
+
 def inject_security_headers(resp):
     resp.headers['X-Content-Type-Options'] = 'nosniff'
     resp.headers['X-Frame-Options'] = 'DENY'
-    resp.headers['X-XSS-Protection'] = '0'
     resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     resp.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     resp.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    resp.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net 'unsafe-inline'; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://accounts.google.com https://cdn.jsdelivr.net; frame-src https://accounts.google.com;"
+    resp.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    resp.headers['Cross-Origin-Resource-Policy'] = 'same-origin'
+    resp.headers['Server'] = ''
+    nonce = getattr(g, 'csp_nonce', '')
+    nonce_str = f"'nonce-{nonce}' " if nonce else ''
+    csp = (
+        f"default-src 'self'; "
+        f"script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net {nonce_str}; "
+        f"style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net {nonce_str}; "
+        f"font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
+        f"img-src 'self' data: https:; "
+        f"connect-src 'self' https://accounts.google.com https://cdn.jsdelivr.net; "
+        f"frame-src https://accounts.google.com; "
+        f"form-action 'self'; "
+        f"base-uri 'self'; "
+        f"object-src 'none'; "
+        f"frame-ancestors 'none'; "
+    )
+    resp.headers['Content-Security-Policy'] = csp
     return resp
 
 app.after_request(inject_security_headers)
@@ -257,9 +320,10 @@ def google_login():
             return jsonify({'error': 'No token'}), 400
         info = google_id_token.verify_oauth2_token(token, google_req.Request(), app.config['GOOGLE_CLIENT_ID'])
         email = info.get('email', '')
+        hd = info.get('hd', '')
         if not email:
             return jsonify({'error': 'No email from Google'}), 400
-        if not email.endswith('@bisu.edu.ph'):
+        if hd != 'bisu.edu.ph' or not email.endswith('@bisu.edu.ph'):
             return jsonify({'error': 'Only @bisu.edu.ph emails allowed'}), 403
         user = db.users.find_one({'username': email})
         if not user:

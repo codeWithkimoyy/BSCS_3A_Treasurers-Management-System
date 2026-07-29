@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ code }} — {{ message }}</title>
+    <style nonce="{{ csp_nonce }}">
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); padding: 1.5rem; }
+        .card { background: #fff; border-radius: 1rem; padding: 3rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1); max-width: 400px; width: 100%; }
+        .code { font-size: 5rem; font-weight: 800; background: linear-gradient(135deg, #4f46e5, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+        .msg { font-size: 1.1rem; color: #475569; margin: 1rem 0 2rem; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; padding: .75rem 2rem; border-radius: .5rem; text-decoration: none; font-weight: 600; transition: opacity .2s; }
+        .btn:hover { opacity: .9; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="code">{{ code }}</div>
+        <div class="msg">{{ message }}</div>
+        <a href="{{ url_for('dashboard') if current_user.is_authenticated else url_for('login') }}" class="btn">Go Home</a>
+    </div>
+</body>
+</html>

@@ -71,9 +71,9 @@
                     {% endif %}
                     <a href="{{ url_for('payments', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
                     {% if e.status == 'active' %}
-                    <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Close this event?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
+                    <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline confirm-close"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
                     {% endif %}
-                    <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline" onsubmit="return confirm('Delete {{ e.title }} and all its payment records?')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                    <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline confirm-delete" data-name="{{ e.title }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
                 </div>
             </div>
         </div>

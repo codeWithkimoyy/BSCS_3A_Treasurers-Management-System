@@ -25,7 +25,7 @@
                         <td><span class="badge" style="background:{{ '#d1fae5;color:#065f46' if s.is_active else '#f1f5f9;color:#94a3b8' }};">{{ 'Active' if s.is_active else 'Inactive' }}</span></td>
                         <td>
                             <button class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ s._id }}" title="Edit"><i class="bi bi-pencil"></i></button>
-                            <form method="POST" action="{{ url_for('delete_student', id=s._id) }}" class="d-inline" onsubmit="return confirm('Remove {{ s.name }}? This cannot be undone.')"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                            <form method="POST" action="{{ url_for('delete_student', id=s._id) }}" class="d-inline confirm-delete" data-name="{{ s.name }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
                         </td>
                     </tr>
                     {% endfor %}

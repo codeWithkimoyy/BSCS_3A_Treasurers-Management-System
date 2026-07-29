@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <style>
+    <style nonce="{{ csp_nonce }}">
         :root {
             --primary: #4f46e5;
             --primary-dark: #3730a3;
@@ -418,7 +418,7 @@
 </head>
 <body>
     <div class="toast-container-custom" id="toastContainer"></div>
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-wrapper">
         {% if current_user.is_authenticated %}
@@ -428,7 +428,7 @@
                     <div class="logo-icon">{% if has_logo|default(false) %}<img src="{{ url_for('app_logo') }}" alt="Application logo">{% else %}₱{% endif %}</div>
                     <div><h5>Student Treasurer</h5><small>Financial Management System</small></div>
                 </div>
-                <button class="d-md-none btn p-1" onclick="toggleSidebar()" style="color:rgba(255,255,255,.5);font-size:1.3rem;border:none;background:none;line-height:1;"><i class="bi bi-x-lg"></i></button>
+                <button class="d-md-none btn p-1 sidebar-toggle-btn" style="color:rgba(255,255,255,.5);font-size:1.3rem;border:none;background:none;line-height:1;"><i class="bi bi-x-lg"></i></button>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-label">Main</div>
@@ -453,7 +453,7 @@
             <div class="sidebar-footer">
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="user-info">
-                        <div class="avatar">{% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" onerror="this.style.display='none';this.parentElement.textContent='{{ (current_user.display_name or current_user.username)[0]|upper }}';">{% else %}{{ (current_user.display_name or current_user.username)[0]|upper }}{% endif %}</div>
+                        <div class="avatar">{% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">{% else %}{{ (current_user.display_name or current_user.username)[0]|upper }}{% endif %}</div>
                         <div><div class="un">{{ current_user.display_name or current_user.username }}</div><div class="role">{{ current_user.role|title }}</div></div>
                     </div>
                     <a href="{{ url_for('logout') }}" class="logout-link" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
@@ -464,7 +464,7 @@
 
         <main class="main-content">
             <div class="d-md-none mb-2 d-flex gap-2">
-                <button class="btn btn-modern-outline btn-modern-sm" onclick="toggleSidebar()" style="flex:1;text-align:left;padding:.5rem .85rem;"><i class="bi bi-list"></i> Menu</button>
+                <button class="btn btn-modern-outline btn-modern-sm sidebar-toggle-btn" style="flex:1;text-align:left;padding:.5rem .85rem;"><i class="bi bi-list"></i> Menu</button>
                 <a href="{{ url_for('logout') }}" class="btn btn-modern-outline btn-modern-sm" style="padding:.5rem .85rem;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
             </div>
             {% block content %}{% endblock %}
@@ -493,28 +493,69 @@
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('show');
-            document.getElementById('sidebarOverlay').classList.toggle('show');
-        }
+    <script nonce="{{ csp_nonce }}">
         document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.sidebar-toggle-btn').forEach(function(el) {
+                el.addEventListener('click', toggleSidebar);
+            });
+            document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
+            document.querySelectorAll('.avatar img[data-fallback]').forEach(function(img) {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    this.parentElement.textContent = this.dataset.fallback;
+                });
+            });
+            document.querySelectorAll('td img[data-fallback], strong img[data-fallback]').forEach(function(img) {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    var fb = this.nextElementSibling;
+                    if (fb && fb.classList.contains('avatar-fallback')) fb.style.display = 'inline-flex';
+                });
+            });
+            document.querySelectorAll('.confirm-delete').forEach(function(f) {
+                f.addEventListener('submit', function(e) {
+                    var name = this.dataset.name || 'this item';
+                    if (!confirm('Delete ' + name + '? This cannot be undone.')) e.preventDefault();
+                });
+            });
+            document.querySelectorAll('.confirm-close').forEach(function(f) {
+                f.addEventListener('submit', function(e) {
+                    if (!confirm('Close this event?')) e.preventDefault();
+                });
+            });
+            document.querySelectorAll('.event-select').forEach(function(s) {
+                s.addEventListener('change', function() { this.form.submit(); });
+            });
+            document.querySelectorAll('.td-check-cell').forEach(function(td) {
+                td.addEventListener('click', function(e) { e.stopPropagation(); });
+            });
+            document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
+                if (!confirm('Confirm entered payments?')) e.preventDefault();
+            });
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                showToast('{{ message }}', '{{ category }}');
+                showToast({{ message|tojson|safe }}, {{ category|tojson|safe }});
                 {% endfor %}
             {% endif %}
             {% endwith %}
         });
+        document.getElementById('toastContainer')?.addEventListener('click', function(e) {
+            var btn = e.target.closest('.toast-close');
+            if (btn) btn.parentElement.remove();
+        });
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
         function showToast(msg, type) {
-            const c = document.getElementById('toastContainer');
-            const t = document.createElement('div');
+            var c = document.getElementById('toastContainer');
+            var t = document.createElement('div');
             t.className = 'toast-custom ' + (type === 'success' ? 'success' : 'error');
-            const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
-            t.innerHTML = '<i class="bi ' + icon + ' toast-icon"></i><span class="toast-text">' + msg + '</span><button class="toast-close" onclick="this.parentElement.remove()"><i class="bi bi-x"></i></button>';
+            var icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            t.innerHTML = '<i class="bi ' + icon + ' toast-icon"></i><span class="toast-text">' + msg + '</span><button class="toast-close" type="button"><i class="bi bi-x"></i></button>';
             c.appendChild(t);
-            setTimeout(() => { if (t.parentElement) { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); } }, 4000);
+            setTimeout(function() { if (t.parentElement) { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function() { t.remove(); }, 300); } }, 4000);
         }
         $(document).ready(function() {
             $('.student-select').select2({
