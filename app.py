@@ -230,7 +230,7 @@ def logo_file():
         uploaded_logo = Path(app.config['LOGO_UPLOAD_DIR']) / f'app_logo.{extension}'
         if uploaded_logo.is_file():
             return uploaded_logo
-    default_logo = Path(app.static_folder) / 'logo.png'
+    default_logo = Path(app.static_folder) / 'web_logo.png'
     return default_logo if default_logo.is_file() else None
 
 def get_financial_totals():
