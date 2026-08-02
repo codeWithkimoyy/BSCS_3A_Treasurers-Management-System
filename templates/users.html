@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Users{% endblock %}
 {% block content %}
+<style nonce="{{ csp_nonce }}">
+.users-table .profile-cell { min-width: 280px; }
+.users-table .profile-wrap { display: flex; align-items: center; gap: .65rem; min-width: 0; }
+.users-table .profile-copy { min-width: 0; line-height: 1.25; }
+.users-table .profile-name { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.users-table .profile-email { display: block; color: #94a3b8; font-size: .72rem; font-weight: 500; overflow-wrap: anywhere; margin-top: .15rem; }
+.users-table .profile-avatar { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.users-table .avatar-fallback { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 50%; align-items: center; justify-content: center; background: linear-gradient(135deg,var(--primary),var(--secondary)); color: #fff; font-size: .8rem; }
+.users-table .role-form { min-width: 210px; }
+@media (max-width: 767.98px) {
+    .users-table .profile-cell { min-width: 220px; }
+}
+</style>
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
     <div>
         <h3><i class="bi bi-shield-lock"></i> Users & Officers</h3>
@@ -11,7 +24,7 @@
 
 <div class="card-modern mb-4">
     <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div><h6 class="mb-1"><i class="bi bi-image" style="color:var(--primary)"></i> Application Logo</h6><div class="subtitle">Displayed in the sidebar for all users. Maximum file size: 2 MB.</div></div>
+        <div><h6 class="mb-1"><i class="bi bi-image" style="color:var(--primary)"></i> Application Logo</h6><div class="subtitle">Displayed on login and in sidebar. Maximum file size: 2 MB. Set <code>LOGO_UPLOAD_DIR</code> to persistent storage on production.</div></div>
         <form method="POST" action="{{ url_for('upload_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="form-control form-modern" required>
@@ -29,16 +42,16 @@
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern">
+            <table class="table table-modern users-table">
                 <thead><tr><th>Profile</th><th>Username</th><th>Role</th><th>Created</th><th>Assign Role</th></tr></thead>
                 <tbody>
                     {% for u in users %}
-                    <tr><td><strong>{% if u.picture %}<img src="{{ u.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (u.display_name or u.username)[0]|upper }}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:.4rem;vertical-align:middle;"><span class="avatar-fallback" style="display:none;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:.75rem;margin-right:.4rem;vertical-align:middle;">{{ (u.display_name or u.username)[0]|upper }}</span>{% else %}<span style="display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-size:.75rem;margin-right:.4rem;vertical-align:middle;">{{ (u.display_name or u.username)[0]|upper }}</span>{% endif %}{{ u.display_name or u.username }}{% if u.google_email %}<small style="display:block;color:#94a3b8;margin-left:2.4rem;">{{ u.google_email }}</small>{% endif %}</strong></td>
+                    <tr><td class="profile-cell"><div class="profile-wrap">{% if u.picture %}<img class="profile-avatar" src="{{ u.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (u.display_name or u.username)[0]|upper }}"><span class="avatar-fallback" style="display:none;">{{ (u.display_name or u.username)[0]|upper }}</span>{% else %}<span class="avatar-fallback" style="display:inline-flex;">{{ (u.display_name or u.username)[0]|upper }}</span>{% endif %}<div class="profile-copy"><span class="profile-name">{{ u.display_name or u.username }}</span>{% if u.google_email %}<span class="profile-email">{{ u.google_email }}</span>{% endif %}</div></div></td>
                         <td>{{ u.username }}</td>
                         <td><span class="badge" style="background:{{ {'admin':'#fce7f3;color:#9d174d','mayor':'#ede9fe;color:#6d28d9','treasurer':'#d1fae5;color:#047857'}.get(u.role, '#dbeafe;color:#1e40af') }};">{{ u.role|upper }}</span></td>
                         <td style="font-size:.8rem;color:#64748b;">{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('assign_user_role', id=u._id) }}" class="d-flex gap-2 align-items-center">
+                            <form method="POST" action="{{ url_for('assign_user_role', id=u._id) }}" class="d-flex gap-2 align-items-center role-form">
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                                 <select name="role" class="form-control form-modern" style="min-width:130px;font-size:.75rem;">
                                     {% for role in ['staff', 'treasurer', 'mayor', 'admin'] %}

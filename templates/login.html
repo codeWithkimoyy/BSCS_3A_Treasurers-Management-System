@@ -58,6 +58,15 @@
     font-weight: 800;
     box-shadow: 0 8px 32px rgba(79,70,229,.3);
     margin-bottom: 1rem;
+    overflow: hidden;
+    padding: .35rem;
+}
+.login-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
 }
 .login-title {
     font-size: 1.35rem;
@@ -155,7 +164,7 @@
 <div class="login-page">
     <div class="login-card animate-in">
         <div class="text-center">
-            <div class="login-logo">{% if has_logo|default(false) %}<img src="{{ url_for('app_logo') }}" alt="Logo" style="width:100%;height:100%;object-fit:contain;border-radius:inherit;">{% else %}₱{% endif %}</div>
+            <div class="login-logo">{% if has_logo|default(false) %}<img src="{{ url_for('app_logo') }}" alt="Logo">{% else %}₱{% endif %}</div>
             <div class="login-title">Student Treasurer</div>
             <div class="login-subtitle">Sign in to manage your organization's finances</div>
         </div>

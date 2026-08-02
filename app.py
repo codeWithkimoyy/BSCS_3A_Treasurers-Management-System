@@ -30,6 +30,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24).hex()
 app.config['MONGO_URI'] = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/student_treasury')
 app.config['GOOGLE_CLIENT_ID'] = os.environ.get('GOOGLE_CLIENT_ID', '')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+app.config['LOGO_UPLOAD_DIR'] = os.environ.get('LOGO_UPLOAD_DIR', app.instance_path)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -38,6 +39,7 @@ if os.environ.get('SESSION_COOKIE_DOMAIN'):
     app.config['SESSION_COOKIE_DOMAIN'] = os.environ.get('SESSION_COOKIE_DOMAIN')
 
 os.makedirs(app.instance_path, exist_ok=True)
+os.makedirs(app.config['LOGO_UPLOAD_DIR'], exist_ok=True)
 
 client = MongoClient(
     app.config['MONGO_URI'],
@@ -151,6 +153,7 @@ def inject_security_headers(resp):
         f"default-src 'self'; "
         f"script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net {nonce_str}; "
         f"style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net {nonce_str}; "
+        f"style-src-attr 'unsafe-inline'; "
         f"font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
         f"img-src 'self' data: https:; "
         f"connect-src 'self' https://accounts.google.com https://cdn.jsdelivr.net; "
@@ -223,7 +226,12 @@ def get_chart_base64(fig):
 ALLOWED_LOGO_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
 def logo_file():
-    return Path(app.static_folder) / 'logo.png'
+    for extension in ALLOWED_LOGO_EXTENSIONS:
+        uploaded_logo = Path(app.config['LOGO_UPLOAD_DIR']) / f'app_logo.{extension}'
+        if uploaded_logo.is_file():
+            return uploaded_logo
+    default_logo = Path(app.static_folder) / 'logo.png'
+    return default_logo if default_logo.is_file() else None
 
 def get_financial_totals():
     """Return canonical totals without counting payment ledger rows twice."""
@@ -893,10 +901,10 @@ def upload_logo():
         flash('Logo must be PNG, JPG, JPEG, or WebP', 'error')
         return redirect(url_for('users'))
     for old_extension in ALLOWED_LOGO_EXTENSIONS:
-        old_file = Path(app.instance_path) / f'app_logo.{old_extension}'
+        old_file = Path(app.config['LOGO_UPLOAD_DIR']) / f'app_logo.{old_extension}'
         if old_file.exists():
             old_file.unlink()
-    upload.save(Path(app.instance_path) / f'app_logo.{extension}')
+    upload.save(Path(app.config['LOGO_UPLOAD_DIR']) / f'app_logo.{extension}')
     flash('Application logo updated', 'success')
     return redirect(url_for('users'))
 
