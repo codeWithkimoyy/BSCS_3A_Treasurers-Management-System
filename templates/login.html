@@ -264,13 +264,14 @@
                     animation-name="fly"
                     auto-rotate
                     auto-rotate-delay="0"
-                    rotation-per-second="18deg"
+                    rotation-per-second="20deg"
                     camera-controls
+                    interaction-prompt="none"
                     environment-image="neutral"
                     shadow-intensity="1.5"
-                    shadow-softness="0.5"
-                    exposure="1.0"
-                    camera-orbit="45deg 75deg 105%"
+                    shadow-softness="0.6"
+                    exposure="1.05"
+                    camera-orbit="45deg 70deg auto"
                     bounds="tight"
                     field-of-view="32deg"
                     touch-action="pan-y"
@@ -344,11 +345,30 @@
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
     const dragon = document.getElementById('dragonModel');
+
+    function initDragonAnimation() {
+        if (!dragon) return;
+        try {
+            const anims = dragon.availableAnimations || [];
+            let targetAnim = 'fly';
+            if (anims.length > 0 && !anims.includes('fly')) {
+                targetAnim = anims[0];
+            }
+            dragon.animationName = targetAnim;
+            dragon.play();
+        } catch(e) {
+            console.error('Dragon play error:', e);
+        }
+    }
+
     if (dragon) {
-        dragon.addEventListener('load', function() {
-            dragon.animationName = 'fly';
-            dragon.play({ repetitions: Infinity });
+        dragon.addEventListener('load', initDragonAnimation);
+        dragon.addEventListener('model-visibility', function(e) {
+            if (e.detail.visible) initDragonAnimation();
         });
+        if (dragon.loaded) {
+            initDragonAnimation();
+        }
     }
 
     document.querySelectorAll('.btn-dragon-act').forEach(function(btn) {
@@ -357,8 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
             const anim = this.dataset.anim;
             if (dragon) {
+                dragon.pause();
                 dragon.animationName = anim;
-                dragon.play({ repetitions: Infinity });
+                dragon.currentTime = 0;
+                dragon.play();
             }
         });
     });
