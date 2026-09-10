@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = ["E501", "B008"]  # long lines allowed; Flask decorators use function args
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F401", "F811", "F841"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

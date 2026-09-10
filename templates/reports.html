@@ -6,11 +6,23 @@
         <h3><i class="bi bi-file-earmark-bar-graph"></i> Reports</h3>
         <div class="subtitle">Financial summaries and analysis</div>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="{{ url_for('reports', type='summary') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='summary' else 'btn-modern-outline' }}">Summary</a>
-        <a href="{{ url_for('reports', type='student') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='student' else 'btn-modern-outline' }}">Per Student</a>
-        <a href="{{ url_for('reports', type='date_range') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='date_range' else 'btn-modern-outline' }}">Date Range</a>
-        <a href="{{ url_for('export') }}" class="btn btn-modern-sm" style="background:linear-gradient(135deg,#059669,#10b981);color:#fff;"><i class="bi bi-download"></i> CSV</a>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <a href="{{ url_for('reports.index', type='summary') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='summary' else 'btn-modern-outline' }}">Summary</a>
+        <a href="{{ url_for('reports.index', type='transparency') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='transparency' else 'btn-modern-outline' }}"><i class="bi bi-eye"></i> Where the Money Went</a>
+        <a href="{{ url_for('reports.index', type='student') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='student' else 'btn-modern-outline' }}">Per Student</a>
+        <a href="{{ url_for('reports.index', type='date_range') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='date_range' else 'btn-modern-outline' }}">Date Range</a>
+        <div class="dropdown">
+            <button class="btn btn-modern-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-download"></i> Export Reports
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem;">
+                <li><a class="dropdown-item" href="{{ url_for('reports.export') }}"><i class="bi bi-filetype-csv text-success me-2"></i>All Transactions CSV</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('reports.export_liquidation') }}"><i class="bi bi-file-earmark-text text-danger me-2"></i>Liquidation CSV (Disbursements)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('reports.export_students') }}"><i class="bi bi-people text-primary me-2"></i>Student Balances CSV</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('events.export_all_excel') }}"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Master Events Excel (.xlsx)</a></li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -26,7 +38,8 @@
         <div class="card-modern h-100">
             <div class="card-header-modern"><i class="bi bi-table" style="color:var(--accent)"></i> Monthly Summary</div>
             <div class="card-body-modern p-0">
-                <table class="table table-modern">
+                <div class="table-responsive">
+                <table class="table table-modern" aria-label="Monthly summary">
                     <thead><tr><th>Month</th><th style="text-align:right">Income</th><th style="text-align:right">Expense</th><th style="text-align:right">Net</th></tr></thead>
                     <tbody>
                         {% for m in monthly %}
@@ -40,20 +53,148 @@
                         {% endif %}
                     </tbody>
                 </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif report_type == 'transparency' %}
+<style>
+@media print {
+    body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+    .sidebar, .navbar, .page-header .d-flex, .btn, .no-print { display: none !important; }
+    .main-content { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+    .card-modern { box-shadow: none !important; border: 1px solid #cbd5e1 !important; break-inside: avoid; }
+    .print-header { display: block !important; margin-bottom: 20px; }
+    .stat-card-modern { border: 1px solid #cbd5e1 !important; color: #000 !important; background: #fff !important; }
+    .stat-label, .stat-value { color: #000 !important; text-shadow: none !important; }
+}
+.print-header { display: none; }
+</style>
+
+<!-- Printable Header -->
+<div class="print-header text-center">
+    <h4 class="mb-1" style="font-weight:800;letter-spacing:-0.5px;">BSCS 3A CLASS TREASURY</h4>
+    <h5 class="mb-2" style="color:var(--text-secondary);">OFFICIAL ITEMISED DISBURSEMENTS &amp; PROOF OF OUTFLOW</h5>
+    <p class="mb-0 text-muted" style="font-size:0.9rem;">Period: Academic Year 2026-2027 | Generated: {{ now_date if now_date else 'Current Term' }}</p>
+    <hr style="border-top:2px solid var(--border-color); margin:15px 0;">
+</div>
+
+<!-- Quick Action & Filter Bar -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger-subtle text-danger px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-arrow-down-circle"></i> Total Outflows: ₱{{ "%.2f"|format(total_expense) }}
+        </span>
+        <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fs-6 rounded-pill">
+            {{ expenses|length }} Transactions
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-modern-sm btn-modern-outline" title="Print Official Statement">
+            <i class="bi bi-printer"></i> Print / Save PDF
+        </button>
+        <a href="{{ url_for('reports.export_liquidation') }}" class="btn btn-modern-sm btn-modern-primary">
+            <i class="bi bi-file-earmark-arrow-down"></i> Export Official CSV
+        </a>
+    </div>
+</div>
+
+<!-- Itemized Disbursement Register Table -->
+<div class="card-modern animate-in mb-4">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span><i class="bi bi-receipt-cutoff" style="color:var(--danger)"></i> Where the Money Went &mdash; Itemized Disbursements &amp; Proof of Outflow</span>
+        <span class="badge bg-danger-subtle text-danger rounded-pill">Total: ₱{{ "%.2f"|format(total_expense) }}</span>
+    </div>
+    <div class="card-body-modern p-0">
+        <div class="table-responsive">
+            <table class="table table-modern datatable align-middle mb-0" aria-label="Itemized Disbursements">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Voucher / Ref</th>
+                        <th>Category</th>
+                        <th>Purpose / Description</th>
+                        <th>Recipient / Payee</th>
+                        <th>Method</th>
+                        <th style="text-align:right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in expenses %}
+                    <tr>
+                        <td style="font-size:0.82rem;color:var(--text-muted);white-space:nowrap;">{{ e.transaction_date }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark border font-monospace" style="font-size:0.75rem;">
+                                {{ e.reference or e.receipt or 'RCP-DIRECT' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if 'Refund' in e.category %}badge-expense{% elif 'Platform' in e.category %}badge-income{% else %}bg-secondary-subtle text-secondary{% endif %}" style="font-size:0.75rem;">
+                                {{ e.category }}
+                            </span>
+                        </td>
+                        <td style="font-weight:600;color:var(--text-main);">{{ e.description or 'Disbursement' }}</td>
+                        <td>
+                            {% if e.student_names %}
+                                {{ e.student_names|join(', ') }}
+                            {% else %}
+                                <span class="text-muted fst-italic">Service / Platform Provider</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-secondary border text-uppercase" style="font-size:0.7rem;">
+                                {{ e.payment_method or 'cash' }}
+                            </span>
+                        </td>
+                        <td style="text-align:right;font-weight:700;color:#dc2626;font-size:0.95rem;">
+                            ₱{{ "%.2f"|format(e.amount) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not expenses %}
+                    <tr><td colspan="7"><div class="empty-state py-4"><i class="bi bi-wallet"></i><p>No disbursements recorded yet</p></div></td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Formal Certification Footer for Print / Audit -->
+<div class="card-modern p-4 mt-4 print-only" style="border: 1px dashed #94a3b8;">
+    <div class="row pt-3">
+        <div class="col-6 text-center">
+            <div style="height: 50px;"></div>
+            <div style="border-top: 1px solid #334155; display: inline-block; width: 80%; padding-top: 5px;">
+                <strong style="color:#0f172a;">KIM C. CUTAMORA</strong><br>
+                <span class="text-muted" style="font-size:0.85rem;">Class Treasurer</span>
+            </div>
+        </div>
+        <div class="col-6 text-center">
+            <div style="height: 50px;"></div>
+            <div style="border-top: 1px solid #334155; display: inline-block; width: 80%; padding-top: 5px;">
+                <strong style="color:#0f172a;">CLASS MAYOR / AUDITOR</strong><br>
+                <span class="text-muted" style="font-size:0.85rem;">Verified &amp; Attested Correct</span>
             </div>
         </div>
     </div>
 </div>
 
 {% elif report_type == 'student' %}
+<div class="d-flex justify-content-between align-items-center mb-3 animate-in">
+    <div><span class="badge bg-primary-subtle text-primary px-3 py-2 fs-6 rounded-pill"><i class="bi bi-people"></i> {{ data|length }} Active Students</span></div>
+    <a href="{{ url_for('reports.export_students') }}" class="btn btn-modern-sm btn-modern-primary"><i class="bi bi-download"></i> Export Student Balances CSV</a>
+</div>
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern datatable">
+            <table class="table table-modern datatable" aria-label="Report data">
                 <thead><tr><th>Student ID</th><th>Name</th><th>Course</th><th style="text-align:right">Paid</th><th style="text-align:right">Used</th><th style="text-align:right">Net</th></tr></thead>
                 <tbody>
                     {% for d in data %}
-                    <tr><td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ d.student_id }}</code></td>
+                    <tr><td><code class="code-modern">{{ d.student_id }}</code></td>
                         <td><strong>{{ d.name }}</strong></td><td>{{ d.course or '—' }}</td>
                         <td style="text-align:right;color:#059669;font-weight:600;">₱{{ "%.2f"|format(d.total_paid) }}</td>
                         <td style="text-align:right;color:#dc2626;font-weight:600;">₱{{ "%.2f"|format(d.total_used) }}</td>
@@ -72,13 +213,16 @@
 {% elif report_type == 'date_range' %}
 <div class="card-modern mb-3 animate-in">
     <div class="card-body-modern">
-    <form class="row g-2 align-items-end" method="GET" action="{{ url_for('reports') }}">
+    <form class="row g-2 align-items-end" method="GET" action="{{ url_for('reports.index') }}">
         <input type="hidden" name="type" value="date_range">
-        <div class="col-auto"><label class="form-label-modern">From</label></div>
-        <div class="col"><input type="date" name="start" class="form-control form-modern" value="{{ start }}"></div>
-        <div class="col-auto"><label class="form-label-modern">To</label></div>
-        <div class="col"><input type="date" name="end" class="form-control form-modern" value="{{ end }}"></div>
-        <div class="col-auto"><button type="submit" class="btn btn-modern-primary"><i class="bi bi-funnel"></i> Filter</button></div>
+        <div class="col-auto"><label class="form-label-modern" for="rpt-start">From</label></div>
+        <div class="col"><input type="date" id="rpt-start" name="start" class="form-control form-modern" value="{{ start }}"></div>
+        <div class="col-auto"><label class="form-label-modern" for="rpt-end">To</label></div>
+        <div class="col"><input type="date" id="rpt-end" name="end" class="form-control form-modern" value="{{ end }}"></div>
+        <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-modern-primary"><i class="bi bi-funnel"></i> Filter</button>
+            <a href="{{ url_for('reports.export', start=start, end=end) }}" class="btn btn-modern-outline" title="Export this date range"><i class="bi bi-download"></i> Export Filtered CSV</a>
+        </div>
     </form>
     </div>
 </div>
@@ -92,7 +236,7 @@
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern datatable">
+            <table class="table table-modern datatable" aria-label="Report data">
                 <thead><tr><th>Date</th><th>Type</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>Ref</th></tr></thead>
                 <tbody>
                     {% for t in transactions %}

@@ -6,7 +6,7 @@
         <h3><i class="bi bi-speedometer2"></i> Dashboard</h3>
         <div class="subtitle">{{ now.strftime('%A, %B %d, %Y') }}</div>
     </div>
-    {% if can_manage_data() %}<a href="{{ url_for('export') }}" class="btn btn-modern-outline btn-modern-sm"><i class="bi bi-download"></i> Export</a>{% endif %}
+    {% if can_manage_data() %}<a href="{{ url_for('reports.export') }}" class="btn btn-modern-outline btn-modern-sm"><i class="bi bi-download"></i> Export</a>{% endif %}
 </div>
 
 {% if not can_manage_data() %}
@@ -67,42 +67,126 @@
     </div>
 </div>
 {% if can_manage_data() %}<div class="row g-3 mb-4">
-    <div class="col-12 animate-in" style="animation-delay:.45s">
-        <div class="card-modern" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;">
+    <div class="col-md-6 animate-in" style="animation-delay:.4s">
+        <div class="card-modern h-100" style="background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;">
             <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
                     <h5 class="mb-1 fw-bold" style="color:#fff;"><i class="bi bi-credit-card"></i> Quick Collect</h5>
-                    <p class="mb-0" style="color:rgba(255,255,255,.6);font-size:.85rem;">Select an active event and mark students as paid</p>
+                    <p class="mb-0" style="color:rgba(255,255,255,.7);font-size:.85rem;">Mark student event & sinking fund payments</p>
                 </div>
-                <a href="{{ url_for('payments') }}" class="btn" style="background:#fff;color:#312e81;font-weight:700;border-radius:12px;padding:.6rem 1.5rem;">
-                    <i class="bi bi-arrow-right"></i> Go to Payments
+                <a href="{{ url_for('payments.index') }}" class="btn" style="background:#fff;color:#312e81;font-weight:700;border-radius:12px;padding:.5rem 1.25rem;">
+                    <i class="bi bi-arrow-right"></i> Collect
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 animate-in" style="animation-delay:.45s">
+        <div class="card-modern h-100" style="background:linear-gradient(135deg,#064e3b,#047857);color:#fff;">
+            <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <h5 class="mb-1 fw-bold" style="color:#fff;"><i class="bi bi-eye"></i> Fund Transparency</h5>
+                    <p class="mb-0" style="color:rgba(255,255,255,.7);font-size:.85rem;">See where funds went & event reconciliations</p>
+                </div>
+                <a href="{{ url_for('reports.index', type='transparency') }}" class="btn" style="background:#fff;color:#064e3b;font-weight:700;border-radius:12px;padding:.5rem 1.25rem;">
+                    <i class="bi bi-arrow-right"></i> View Outflows
                 </a>
             </div>
         </div>
     </div>
 </div>{% endif %}
 
-<div class="card-modern animate-in mb-4" style="animation-delay:.45s">
-    <div class="card-header-modern"><i class="bi bi-check2-circle" style="color:var(--accent)"></i> Recent Payments</div>
-    <div class="card-body-modern p-0">
-        <div class="table-responsive">
-            <table class="table table-modern">
-                <thead><tr><th>Student</th><th>Event</th><th style="text-align:right">Amount</th><th>Date</th><th>Notes</th></tr></thead>
-                <tbody>
-                    {% for p in recent_payments %}
-                    <tr>
-                        <td><strong>{{ p.student_name }}</strong></td>
-                        <td>{{ p.event_title }}</td>
-                        <td style="text-align:right;font-weight:700;color:var(--accent);">₱{{ "%.2f"|format(p.amount) }}</td>
-                        <td style="font-size:.8rem;color:#64748b;">{{ p.confirmed_at.strftime('%b %d, %I:%M %p') if p.confirmed_at else '—' }}</td>
-                        <td style="font-size:.8rem;color:#64748b;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ p.notes or '—' }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not recent_payments %}
-                    <tr><td colspan="5"><div class="empty-state"><i class="bi bi-inbox"></i><p>No payments confirmed yet</p><a href="{{ url_for('payments') }}" class="btn btn-modern-primary btn-modern-sm">Collect Payments</a></div></td></tr>
-                    {% endif %}
-                </tbody>
-            </table>
+<div class="card-modern mb-4 animate-in" style="animation-delay:.42s">
+    <div class="card-header-modern d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-pie-chart-fill" style="color:var(--danger)"></i> Where the Money Has Gone (Disbursement Breakdown)</span>
+        <a href="{{ url_for('reports.index', type='transparency') }}" class="btn btn-modern-outline btn-modern-sm"><i class="bi bi-eye"></i> View Full Audit</a>
+    </div>
+    <div class="card-body-modern">
+        <div class="row g-3 align-items-center">
+            {% for c in disbursement_categories %}
+            <div class="col-md-6 col-lg-4">
+                <div class="p-3 border rounded-3" style="background:var(--surface-hover);border-color:var(--border-color)!important;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);">{{ c.name }}</span>
+                        <strong style="font-size:0.85rem;color:var(--danger);">₱{{ "%.2f"|format(c.amount) }}</strong>
+                    </div>
+                    <div class="progress-modern" style="height:6px;">
+                        <div class="progress-bar-modern" style="width:{{ c.pct }}%;background:{% if 'Refund' in c.name %}#f59e0b{% elif 'Platform' in c.name %}#3b82f6{% elif 'Event' in c.name %}#10b981{% elif 'Supplies' in c.name %}#8b5cf6{% else %}#ef4444{% endif %};"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1" style="font-size:0.7rem;color:var(--text-muted);">
+                        <span>Share of total outflows</span>
+                        <span>{{ "%.1f"|format(c.pct) }}%</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% if not disbursement_categories %}
+            <div class="col-12 py-3 text-center text-muted">
+                <i class="bi bi-shield-check fs-4 d-block mb-1 text-success"></i>
+                No disbursements recorded yet. All treasury inflows are currently in balance.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6 animate-in" style="animation-delay:.45s">
+        <div class="card-modern h-100">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-check2-circle" style="color:var(--accent)"></i> Recent Inflows (Payments)</span>
+                <a href="{{ url_for('payments.index') }}" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size:0.8rem;">View All</a>
+            </div>
+            <div class="card-body-modern p-0">
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0">
+                        <thead><tr><th>Student</th><th>Event</th><th style="text-align:right">Amount</th></tr></thead>
+                        <tbody>
+                            {% for p in recent_payments[:5] %}
+                            <tr>
+                                <td><strong>{{ p.student_name }}</strong></td>
+                                <td><span class="badge bg-light text-dark">{{ p.event_title }}</span></td>
+                                <td style="text-align:right;font-weight:700;color:var(--accent);">₱{{ "%.2f"|format(p.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not recent_payments %}
+                            <tr><td colspan="3"><div class="empty-state py-3"><p class="mb-0" style="font-size:0.85rem;">No payments confirmed yet</p></div></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 animate-in" style="animation-delay:.5s">
+        <div class="card-modern h-100">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-receipt-cutoff" style="color:var(--danger)"></i> Recent Outflows (Where Money Went)</span>
+                <a href="{{ url_for('reports.index', type='transparency') }}" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-size:0.8rem;">Full Report</a>
+            </div>
+            <div class="card-body-modern p-0">
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0">
+                        <thead><tr><th>Purpose</th><th>Recipient / Ref</th><th style="text-align:right">Amount</th></tr></thead>
+                        <tbody>
+                            {% for e in recent_expenses %}
+                            <tr>
+                                <td><strong>{{ e.description or 'Disbursement' }}</strong></td>
+                                <td>
+                                    <small class="text-muted">
+                                        {% if e.student_names %}{{ e.student_names|join(', ') }}{% else %}{{ e.reference or 'Platform/Event' }}{% endif %}
+                                    </small>
+                                </td>
+                                <td style="text-align:right;font-weight:700;color:var(--danger);">-₱{{ "%.2f"|format(e.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not recent_expenses %}
+                            <tr><td colspan="3"><div class="empty-state py-3"><p class="mb-0" style="font-size:0.85rem;">No disbursements recorded yet</p></div></td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -112,7 +196,7 @@
         <div class="card-modern">
             <div class="card-header-modern"><i class="bi bi-pie-chart" style="color:var(--primary)"></i> Income vs Expense Breakdown</div>
             <div class="card-body-modern">
-                <div class="chart-container">{% if chart %}<img src="data:image/png;base64,{{ chart }}" alt="chart">{% else %}<div class="empty-state"><i class="bi bi-bar-chart"></i><p>No data yet</p></div>{% endif %}</div>
+                <div class="chart-container">{% if has_donut %}<canvas id="donutChart" role="img" aria-label="Income versus expense breakdown"></canvas>{% else %}<div class="empty-state"><i class="bi bi-bar-chart"></i><p>No data yet</p></div>{% endif %}</div>
             </div>
         </div>
     </div>
@@ -120,7 +204,7 @@
         <div class="card-modern">
             <div class="card-header-modern"><i class="bi bi-graph-up" style="color:var(--accent)"></i> Monthly Trend</div>
             <div class="card-body-modern">
-                <div class="chart-container">{% if trend_chart %}<img src="data:image/png;base64,{{ trend_chart }}" alt="trend">{% else %}<div class="empty-state"><i class="bi bi-bar-chart"></i><p>Not enough data for trend</p></div>{% endif %}</div>
+                <div class="chart-container">{% if has_trend %}<canvas id="trendChart" role="img" aria-label="Monthly income and expense trend"></canvas>{% else %}<div class="empty-state"><i class="bi bi-bar-chart"></i><p>Not enough data for trend</p></div>{% endif %}</div>
             </div>
         </div>
     </div>
@@ -142,7 +226,7 @@
                     </tr>
                     {% endfor %}
                     {% if not recent %}
-                    <tr><td colspan="4"><div class="empty-state"><i class="bi bi-inbox"></i><p>No separate ledger transactions recorded yet</p><a href="{{ url_for('transactions') }}" class="btn btn-modern-primary btn-modern-sm">Add Transaction</a></div></td></tr>
+                    <tr><td colspan="4"><div class="empty-state"><i class="bi bi-inbox"></i><p>No separate ledger transactions recorded yet</p><a href="{{ url_for('transactions.index') }}" class="btn btn-modern-primary btn-modern-sm">Add Transaction</a></div></td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -150,6 +234,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
     const counters = document.querySelectorAll('.counter');
@@ -167,6 +252,78 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(step);
     });
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    const php = (n) => '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (typeof Chart !== 'undefined') {
+        Chart.defaults.color = isDark ? '#94a3b8' : '#64748b';
+        Chart.defaults.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    }
+
+    {% if has_donut %}
+    const donut = {{ donut|tojson|safe }};
+    const donutChart = new Chart(document.getElementById('donutChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Income', 'Expense'],
+            datasets: [{ data: [donut.income, donut.expense], backgroundColor: ['#10b981', '#ef4444'], borderWidth: 0 }]
+        },
+        options: {
+            cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: isDark ? '#cbd5e1' : '#475569' } },
+                tooltip: { callbacks: { label: (c) => c.label + ': ' + php(c.parsed) } }
+            }
+        }
+    });
+    {% endif %}
+
+    {% if has_trend %}
+    const trend = {{ trend|tojson|safe }};
+    const trendChart = new Chart(document.getElementById('trendChart'), {
+        type: 'bar',
+        data: {
+            labels: trend.labels,
+            datasets: [
+                { label: 'Income', data: trend.income, backgroundColor: '#10b981' },
+                { label: 'Expense', data: trend.expense, backgroundColor: '#ef4444' }
+            ]
+        },
+        options: {
+            plugins: { 
+                legend: { labels: { color: isDark ? '#cbd5e1' : '#475569' } },
+                tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + php(c.parsed.y) } } 
+            },
+            scales: { 
+                x: { ticks: { color: isDark ? '#94a3b8' : '#64748b' }, grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' } },
+                y: { ticks: { color: isDark ? '#94a3b8' : '#64748b', callback: (v) => php(v) }, grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' } } 
+            }
+        }
+    });
+    {% endif %}
+
+    document.getElementById('themeToggle')?.addEventListener('click', () => {
+        setTimeout(() => {
+            const darkNow = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (typeof Chart !== 'undefined') {
+                Chart.defaults.color = darkNow ? '#94a3b8' : '#64748b';
+                Chart.defaults.borderColor = darkNow ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+                {% if has_donut %}
+                donutChart.options.plugins.legend.labels.color = darkNow ? '#cbd5e1' : '#475569';
+                donutChart.update();
+                {% endif %}
+                {% if has_trend %}
+                trendChart.options.plugins.legend.labels.color = darkNow ? '#cbd5e1' : '#475569';
+                trendChart.options.scales.x.ticks.color = darkNow ? '#94a3b8' : '#64748b';
+                trendChart.options.scales.y.ticks.color = darkNow ? '#94a3b8' : '#64748b';
+                trendChart.options.scales.x.grid.color = darkNow ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+                trendChart.options.scales.y.grid.color = darkNow ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+                trendChart.update();
+                {% endif %}
+            }
+        }, 50);
+    });
 });
 </script>
 {% endblock %}

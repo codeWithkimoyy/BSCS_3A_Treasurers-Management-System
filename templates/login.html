@@ -164,7 +164,7 @@
 <div class="login-page">
     <div class="login-card animate-in">
         <div class="text-center">
-            <div class="login-logo">{% if has_logo|default(false) %}<img src="{{ url_for('app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
+            <div class="login-logo">{% if has_logo|default(false) %}<img src="{{ url_for('admin.app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
             <div class="login-title">Student Treasurer</div>
             <div class="login-subtitle">Sign in to manage your organization's finances</div>
         </div>
@@ -209,7 +209,7 @@ function initGIS() {
 function handleGoogleCredential(response) {
     var btn = document.getElementById('googleBtn');
     btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
-    fetch('{{ url_for("google_login") }}', {
+    fetch('{{ url_for("auth.google_login") }}', {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': '{{ csrf_token }}'},
         body: JSON.stringify({credential: response.credential})

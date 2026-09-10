@@ -12,19 +12,19 @@
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern datatable">
+            <table class="table table-modern datatable" aria-label="Financial transactions">
                 <thead><tr><th>Date</th><th>Type</th><th>Receipt #</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>By</th><th style="width:50px"></th></tr></thead>
                 <tbody>
                     {% for t in transactions %}
                     <tr>
-                        <td style="font-size:.8rem;color:#64748b;">{{ t.transaction_date }}</td>
+                        <td style="font-size:.8rem;color:var(--text-muted);">{{ t.transaction_date }}</td>
                         <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ 'Income' if t.type=='income' else 'Expense' }}</span></td>
-                        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.7rem;">{{ t.receipt or t.reference or '—' }}</code></td>
-                        <td>{% if t.student_names %}{{ t.student_names|join(', ') }}{% else %}<span style="color:#94a3b8;">—</span>{% endif %}</td>
-                        <td>{{ t.description or '<span style="color:#94a3b8;">—</span>'|safe }}</td>
+                        <td><code class="code-modern">{{ t.receipt or t.reference or '—' }}</code></td>
+                        <td>{% if t.student_names %}{{ t.student_names|join(', ') }}{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+                        <td>{{ t.description or '<span style="color:var(--text-muted);">—</span>'|safe }}</td>
                         <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
-                        <td style="font-size:.75rem;color:#64748b;">{{ t.username or '—' }}</td>
-                        <td><form method="POST" action="{{ url_for('delete_transaction', id=t._id) }}" class="d-inline confirm-delete"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-x"></i></button></form></td>
+                        <td style="font-size:.75rem;color:var(--text-muted);">{{ t.username or '—' }}</td>
+                        <td><form method="POST" action="{{ url_for('transactions.delete', id=t._id) }}" class="d-inline confirm-delete"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete transaction" aria-label="Delete transaction"><i class="bi bi-x"></i></button></form></td>
                     </tr>
                     {% endfor %}
                     {% if not transactions %}
@@ -39,7 +39,7 @@
 <div class="modal fade modal-modern" id="addModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-plus-circle"></i> New Transaction</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('add_transaction') }}">
+        <form method="POST" action="{{ url_for('transactions.add') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="row g-3">
@@ -57,24 +57,24 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label-modern">Amount (₱)</label>
-                        <input type="number" name="amount" class="form-control form-modern" step="0.01" min="0.01" required placeholder="0.00">
+                        <label class="form-label-modern" for="tx-amount">Amount (₱)</label>
+                        <input type="number" id="tx-amount" name="amount" class="form-control form-modern" step="0.01" min="0.01" required placeholder="0.00">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label-modern">Date</label>
-                        <input type="date" name="transaction_date" class="form-control form-modern" value="{{ now.strftime('%Y-%m-%d') }}">
+                        <label class="form-label-modern" for="tx-date">Date</label>
+                        <input type="date" id="tx-date" name="transaction_date" class="form-control form-modern" value="{{ now.strftime('%Y-%m-%d') }}">
                     </div>
                 </div>
                 <div class="row g-3 mt-3">
                     <div class="col-md-4">
-                        <label class="form-label-modern">Students <span style="color:#94a3b8;font-weight:400;">(optional, multiple)</span></label>
-                        <select name="student_ids" class="form-control form-modern student-select" multiple>
+                        <label class="form-label-modern" for="tx-students">Students <span style="color:#94a3b8;font-weight:400;">(optional, multiple)</span></label>
+                        <select id="tx-students" name="student_ids" class="form-control form-modern student-select" multiple>
                             {% for s in students %}<option value="{{ s._id }}">{{ s.name }} ({{ s.student_id }})</option>{% endfor %}
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label-modern">Payment Method</label>
-                        <select name="payment_method" class="form-control form-modern">
+                        <label class="form-label-modern" for="tx-method">Payment Method</label>
+                        <select id="tx-method" name="payment_method" class="form-control form-modern">
                             <option value="cash">Cash</option>
                             <option value="gcash">GCash</option>
                             <option value="bank">Bank Transfer</option>
@@ -84,12 +84,12 @@
                 </div>
                 <div class="row g-3 mt-3">
                     <div class="col-md-6">
-                        <label class="form-label-modern">Description</label>
-                        <input type="text" name="description" class="form-control form-modern" placeholder="Brief description">
+                        <label class="form-label-modern" for="tx-desc">Description</label>
+                        <input type="text" id="tx-desc" name="description" class="form-control form-modern" placeholder="Brief description">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label-modern">Reference #</label>
-                        <input type="text" name="reference" class="form-control form-modern" placeholder="OR, receipt, or invoice #">
+                        <label class="form-label-modern" for="tx-ref">Reference #</label>
+                        <input type="text" id="tx-ref" name="reference" class="form-control form-modern" placeholder="OR, receipt, or invoice #">
                     </div>
                 </div>
             </div>

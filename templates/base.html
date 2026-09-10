@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="{{ url_for('app_logo', v='bscs3a-20260802') }}">
+    <link rel="icon" href="{{ url_for('admin.app_logo', v='bscs3a-20260802') }}">
     <title>{% block title %}Student Treasurer{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -20,19 +20,39 @@
             --accent-dark: #059669;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --bg: #f1f5f9;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-hover: #f1f5f9;
+            --text-main: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
             --sidebar-bg: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%);
             --card-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
             --card-shadow-hover: 0 10px 40px rgba(79,70,229,.12), 0 2px 8px rgba(0,0,0,.06);
             --radius: 16px;
             --radius-sm: 10px;
         }
+
+        [data-theme="dark"] {
+            --bg: #0b0f19;
+            --surface: #131b2e;
+            --surface-hover: #1c2640;
+            --text-main: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+            --sidebar-bg: linear-gradient(180deg, #090c15 0%, #101426 50%, #151a33 100%);
+            --card-shadow: 0 4px 20px rgba(0,0,0,.4);
+            --card-shadow-hover: 0 10px 40px rgba(0,0,0,.6);
+        }
         * { box-sizing: border-box; }
         body {
             background: var(--bg);
             font-family: 'Inter', -apple-system, system-ui, sans-serif;
-            color: #1e293b;
+            color: var(--text-main);
             overflow-x: hidden;
+            transition: background-color .25s ease, color .25s ease;
         }
         ::selection { background: var(--primary-light); color: #fff; }
 
@@ -126,28 +146,30 @@
         @media (max-width: 767.98px) { .main-content { padding: 1rem 1rem 5rem; } }
 
         .page-header { margin-bottom: 1.5rem; }
-        .page-header h3 { font-weight: 700; font-size: 1.4rem; color: #0f172a; display: flex; align-items: center; gap: .5rem; }
+        .page-header h3 { font-weight: 700; font-size: 1.4rem; color: var(--text-main); display: flex; align-items: center; gap: .5rem; }
         .page-header h3 i { color: var(--primary); }
-        .page-header .subtitle { color: #64748b; font-size: .85rem; margin-top: .15rem; }
+        .page-header .subtitle { color: var(--text-muted); font-size: .85rem; margin-top: .15rem; }
 
         /* ── Cards ── */
         .card-modern {
-            background: #fff;
-            border: none;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
             border-radius: var(--radius);
             box-shadow: var(--card-shadow);
             transition: all .25s ease;
             overflow: hidden;
+            color: var(--text-main);
         }
         .card-modern:hover { box-shadow: var(--card-shadow-hover); }
         .card-modern .card-header-modern {
             padding: 1rem 1.25rem;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
             font-weight: 600;
             font-size: .9rem;
             display: flex;
             align-items: center;
             gap: .5rem;
+            color: var(--text-main);
         }
         .card-modern .card-body-modern { padding: 1.25rem; }
 
@@ -195,24 +217,29 @@
         .stat-members { background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%); }
 
         /* ── Tables ── */
-        .table-modern { margin-bottom: 0; }
+        .table-modern { margin-bottom: 0; color: var(--text-main); }
         .table-modern thead th {
             font-size: .7rem;
             text-transform: uppercase;
             letter-spacing: .5px;
-            color: #64748b;
+            color: var(--text-muted);
             font-weight: 600;
-            border-bottom: 2px solid #f1f5f9;
+            border-bottom: 2px solid var(--border-color);
             padding: .75rem .5rem;
-            background: #fafbfc;
+            background: var(--surface-hover);
         }
-        .table-modern tbody td { padding: .65rem .5rem; vertical-align: middle; border-bottom: 1px solid #f1f5f9; font-size: .875rem; }
-        .table-modern tbody tr:hover { background: #f8fafc; }
+        .table-modern tbody td { padding: .65rem .5rem; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: .875rem; color: var(--text-main); }
+        .table-modern tbody tr:hover { background: var(--surface-hover); }
         .table-modern tbody tr:last-child td { border-bottom: none; }
 
         /* ── Badges ── */
         .badge-income { background: #d1fae5; color: #065f46; font-weight: 500; font-size: .7rem; padding: .25rem .65rem; border-radius: 20px; }
         .badge-expense { background: #fee2e2; color: #991b1b; font-weight: 500; font-size: .7rem; padding: .25rem .65rem; border-radius: 20px; }
+        .badge-status-pending { background: rgba(148,163,184,.15); color: var(--text-muted); border: 1px solid rgba(148,163,184,.2); font-weight: 500; font-size: .7rem; padding: .25rem .65rem; border-radius: 20px; }
+        .badge-status-partial { background: rgba(245,158,11,.15); color: #b45309; border: 1px solid rgba(245,158,11,.25); font-weight: 500; font-size: .7rem; padding: .25rem .65rem; border-radius: 20px; }
+        .code-modern { background: var(--surface-hover); color: var(--primary); padding: 2px 6px; border-radius: 4px; font-size: .75rem; border: 1px solid var(--border-color); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+        [data-theme="dark"] .code-modern { color: var(--primary-light); background: rgba(129,140,248,.1); border-color: rgba(129,140,248,.2); }
+        [data-theme="dark"] .badge-status-partial { color: #fcd34d; border-color: rgba(245,158,11,.3); }
 
         /* ── Buttons ── */
         .btn-modern {
@@ -225,14 +252,14 @@
         }
         .btn-modern-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; }
         .btn-modern-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(79,70,229,.3); color: #fff; }
-        .btn-modern-outline { background: transparent; border: 1.5px solid #e2e8f0; color: #475569; }
+        .btn-modern-outline { background: var(--surface); border: 1.5px solid var(--border-color); color: var(--text-secondary); }
         .btn-modern-outline:hover { border-color: var(--primary); color: var(--primary); background: rgba(79,70,229,.04); }
         .btn-modern-danger { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; }
         .btn-modern-danger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,.3); color: #fff; }
         .btn-modern-sm { padding: .35rem .75rem; font-size: .75rem; }
 
         /* ── Modal ── */
-        .modal-modern .modal-content { border: none; border-radius: var(--radius); box-shadow: 0 25px 80px rgba(0,0,0,.15); }
+        .modal-modern .modal-content { border: 1px solid var(--border-color); border-radius: var(--radius); box-shadow: 0 25px 80px rgba(0,0,0,.15); background: var(--surface); color: var(--text-main); }
         .modal-modern .modal-header {
             background: linear-gradient(135deg, #1e1b4b, #312e81);
             color: #fff;
@@ -242,11 +269,11 @@
         }
         .modal-modern .modal-header .btn-close { filter: brightness(0) invert(1); }
         .modal-modern .modal-body { padding: 1.5rem; }
-        .modal-modern .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid #f1f5f9; }
+        .modal-modern .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); }
 
-        .form-modern { border-radius: var(--radius-sm); border: 1.5px solid #e2e8f0; padding: .55rem .85rem; font-size: .875rem; transition: all .2s; background: #fff; }
-        .form-modern:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
-        .form-label-modern { font-size: .8rem; font-weight: 600; color: #475569; margin-bottom: .35rem; }
+        .form-modern { border-radius: var(--radius-sm); border: 1.5px solid var(--border-color); padding: .55rem .85rem; font-size: .875rem; transition: all .2s; background: var(--surface); color: var(--text-main); }
+        .form-modern:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(79,70,229,.1); background: var(--surface); color: var(--text-main); }
+        .form-label-modern { font-size: .8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: .35rem; }
 
         /* ── Toast ── */
         .toast-container-custom { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: .5rem; }
@@ -414,10 +441,115 @@
             .stat-card-modern { border-radius: 12px; }
             .btn-modern { font-size: .75rem; padding: .4rem .8rem; }
         }
+
+        /* ── Skip link (a11y) ── */
+        .skip-link {
+            position: fixed; top: -100px; left: 1rem; z-index: 2000;
+            background: var(--primary); color: #fff; padding: .5rem 1rem;
+            border-radius: 8px; text-decoration: none; font-weight: 600;
+            transition: top .2s;
+        }
+        .skip-link:focus { top: 1rem; color: #fff; }
+
+        /* ── Dark mode ── */
+        [data-theme="dark"] body { background: var(--bg); color: var(--text-main); }
+        [data-theme="dark"] .card-modern { background: var(--surface); border-color: var(--border-color); color: var(--text-main); }
+        [data-theme="dark"] .card-modern .card-header-modern { border-color: var(--border-color); color: var(--text-main); }
+        [data-theme="dark"] .table-modern { color: var(--text-main); }
+        [data-theme="dark"] .table-modern thead th { background: var(--surface-hover); color: var(--text-muted); border-color: var(--border-color); }
+        [data-theme="dark"] .table-modern tbody td { border-color: var(--border-color); color: var(--text-main); }
+        [data-theme="dark"] .table-modern tbody tr:hover { background: var(--surface-hover) !important; }
+        [data-theme="dark"] .form-modern,
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select { 
+            background: var(--surface) !important; 
+            color: var(--text-main) !important; 
+            border-color: var(--border-color) !important; 
+        }
+        [data-theme="dark"] .form-modern:focus,
+        [data-theme="dark"] .form-control:focus,
+        [data-theme="dark"] .form-select:focus { 
+            background: var(--surface) !important;
+            color: var(--text-main) !important;
+            border-color: var(--primary-light) !important;
+            box-shadow: 0 0 0 3px rgba(129,140,248,.18) !important;
+        }
+        [data-theme="dark"] .btn-modern-outline { border-color: var(--border-color); color: var(--text-secondary); background: var(--surface); }
+        [data-theme="dark"] .btn-modern-outline:hover { border-color: var(--primary-light); color: #fff; background: rgba(129,140,248,.15); }
+        [data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+        [data-theme="dark"] .text-dark { color: var(--text-main) !important; }
+        [data-theme="dark"] .bg-light { background-color: var(--surface-hover) !important; color: var(--text-secondary) !important; border-color: var(--border-color) !important; }
+        [data-theme="dark"] .badge.bg-light { background-color: #1e293b !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+        [data-theme="dark"] code { background: #1e293b !important; color: #818cf8 !important; }
+        [data-theme="dark"] .badge-income { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); }
+        [data-theme="dark"] .badge-expense { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+        [data-theme="dark"] .modal-modern .modal-content { background: var(--surface); color: var(--text-main); border: 1px solid var(--border-color); }
+        [data-theme="dark"] .modal-modern .modal-footer { border-color: var(--border-color); }
+        [data-theme="dark"] .mobile-bottom-nav { background: var(--surface); border-color: var(--border-color); }
+        [data-theme="dark"] .toast-custom { background: var(--surface); color: var(--text-main); border: 1px solid var(--border-color); }
+        [data-theme="dark"] .page-header h3 { color: var(--text-main); }
+        [data-theme="dark"] .page-header .subtitle { color: var(--text-muted); }
+        [data-theme="dark"] .dataTables_wrapper { color: var(--text-secondary); }
+        [data-theme="dark"] .dataTables_wrapper .dataTables_length select,
+        [data-theme="dark"] .dataTables_wrapper .dataTables_filter input {
+            background-color: var(--surface);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+        }
+        [data-theme="dark"] .dataTables_wrapper .dataTables_info { color: var(--text-muted); }
+        [data-theme="dark"] .dataTables_wrapper .page-item .page-link {
+            background-color: var(--surface);
+            border-color: var(--border-color);
+            color: var(--text-secondary);
+        }
+        [data-theme="dark"] .dataTables_wrapper .page-item.active .page-link {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        [data-theme="dark"] .select2-container--default .select2-selection--single,
+        [data-theme="dark"] .select2-container--default .select2-selection--multiple {
+            background-color: var(--surface) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-main) !important;
+        }
+        [data-theme="dark"] .select2-dropdown {
+            background-color: var(--surface) !important;
+            border-color: var(--border-color) !important;
+            color: var(--text-main) !important;
+        }
+        [data-theme="dark"] .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: var(--surface-hover) !important;
+            color: var(--text-main) !important;
+            border-color: var(--border-color) !important;
+        }
+        [data-theme="dark"] .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--primary) !important;
+            color: #fff !important;
+        }
+        [data-theme="dark"] .dropdown-menu {
+            background-color: var(--surface) !important;
+            border-color: var(--border-color) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+        }
+        [data-theme="dark"] .dropdown-item {
+            color: var(--text-main) !important;
+        }
+        [data-theme="dark"] .dropdown-item:hover,
+        [data-theme="dark"] .dropdown-item:focus {
+            background-color: var(--surface-hover) !important;
+            color: var(--primary-light) !important;
+        }
+        [data-theme="dark"] .dropdown-divider {
+            border-color: var(--border-color) !important;
+        }
     </style>
 </head>
 <body>
-    <div class="toast-container-custom" id="toastContainer"></div>
+    <a href="#mainContent" class="visually-hidden-focusable skip-link">Skip to content</a>
+    <div class="toast-container-custom" id="toastContainer" role="status" aria-live="polite" aria-atomic="false"></div>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="app-wrapper">
@@ -425,29 +557,30 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
-                    <div class="logo-icon">{% if has_logo|default(false) %}<img src="{{ url_for('app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
+                    <div class="logo-icon">{% if has_logo|default(false) %}<img src="{{ url_for('admin.app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
                     <div><h5>Student Treasurer</h5><small>Financial Management System</small></div>
                 </div>
                 <button class="d-md-none btn p-1 sidebar-toggle-btn" style="color:rgba(255,255,255,.5);font-size:1.3rem;border:none;background:none;line-height:1;"><i class="bi bi-x-lg"></i></button>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-label">Main</div>
-                <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
                 {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint == 'transactions' %}active{% endif %}" href="{{ url_for('transactions') }}"><i class="bi bi-cash-stack"></i>Transactions</a>
-                <a class="nav-link {% if request.endpoint == 'students' %}active{% endif %}" href="{{ url_for('students') }}"><i class="bi bi-people"></i>Students</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}"><i class="bi bi-cash-stack"></i>Transactions</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}"><i class="bi bi-people"></i>Students</a>
                 {% endif %}
 
                 <div class="nav-label">Management</div>
-                <a class="nav-link {% if request.endpoint == 'payments' %}active{% endif %}" href="{{ url_for('payments') }}"><i class="bi bi-credit-card"></i>{{ 'Payments' if can_manage_data() else 'Payment Status' }}</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('payments') %}active{% endif %}" href="{{ url_for('payments.index') }}"><i class="bi bi-credit-card"></i>{{ 'Payments' if can_manage_data() else 'Payment Status' }}</a>
                 {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}"><i class="bi bi-calendar-event"></i>Events</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('events') %}active{% endif %}" href="{{ url_for('events.index') }}"><i class="bi bi-calendar-event"></i>Events</a>
                 {% endif %}
-                <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
-                {% if can_manage_data() %}<a class="nav-link {% if request.endpoint == 'export' %}active{% endif %}" href="{{ url_for('export') }}"><i class="bi bi-download"></i>Export CSV</a>{% endif %}
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}"><i class="bi bi-eye"></i>Transparency</a>
+                {% if can_manage_data() %}<a class="nav-link {% if request.endpoint == 'reports.export' %}active{% endif %}" href="{{ url_for('reports.export') }}"><i class="bi bi-download"></i>Export CSV</a>{% endif %}
                 {% if current_user.role == 'admin' %}
                 <div class="nav-label">System</div>
-                <a class="nav-link {% if request.endpoint == 'users' %}active{% endif %}" href="{{ url_for('users') }}"><i class="bi bi-shield-lock"></i>Users</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin.users') }}"><i class="bi bi-shield-lock"></i>Users</a>
                 {% endif %}
             </nav>
             <div class="sidebar-footer">
@@ -456,16 +589,19 @@
                         <div class="avatar">{% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">{% else %}{{ (current_user.display_name or current_user.username)[0]|upper }}{% endif %}</div>
                         <div><div class="un">{{ current_user.display_name or current_user.username }}</div><div class="role">{{ current_user.role|title }}</div></div>
                     </div>
-                    <a href="{{ url_for('logout') }}" class="logout-link" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+                    <div class="d-flex align-items-center gap-1">
+                        <button type="button" class="logout-link" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi bi-moon-stars"></i></button>
+                        <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+                    </div>
                 </div>
             </div>
         </aside>
         {% endif %}
 
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <div class="d-md-none mb-2 d-flex gap-2">
                 <button class="btn btn-modern-outline btn-modern-sm sidebar-toggle-btn" style="flex:1;text-align:left;padding:.5rem .85rem;"><i class="bi bi-list"></i> Menu</button>
-                <a href="{{ url_for('logout') }}" class="btn btn-modern-outline btn-modern-sm" style="padding:.5rem .85rem;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-modern-outline btn-modern-sm" style="padding:.5rem .85rem;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
             </div>
             {% block content %}{% endblock %}
             <footer class="text-center mt-4" style="color:#94a3b8;font-size:.75rem;">
@@ -476,15 +612,15 @@
 
     {% if current_user.is_authenticated %}
     <nav class="mobile-bottom-nav">
-        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><i class="bi bi-speedometer2"></i>Home</a>
+        <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('dashboard') }}"><i class="bi bi-speedometer2"></i>Home</a>
         {% if can_manage_data() %}
-        <a href="{{ url_for('payments') }}" class="{{ 'active' if request.endpoint == 'payments' }}"><i class="bi bi-credit-card"></i>Collect</a>
-        <a href="{{ url_for('events') }}" class="{{ 'active' if request.endpoint == 'events' }}"><i class="bi bi-calendar-event"></i>Events</a>
-        <a href="{{ url_for('students') }}" class="{{ 'active' if request.endpoint == 'students' }}"><i class="bi bi-people"></i>Members</a>
+        <a href="{{ url_for('payments.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('payments') }}"><i class="bi bi-credit-card"></i>Collect</a>
+        <a href="{{ url_for('events.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('events') }}"><i class="bi bi-calendar-event"></i>Events</a>
+        <a href="{{ url_for('students.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('students') }}"><i class="bi bi-people"></i>Members</a>
         {% else %}
-        <a href="{{ url_for('payments') }}" class="{{ 'active' if request.endpoint == 'payments' }}"><i class="bi bi-credit-card"></i>Status</a>
+        <a href="{{ url_for('payments.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('payments') }}"><i class="bi bi-credit-card"></i>Status</a>
         {% endif %}
-        <a href="{{ url_for('reports') }}" class="{{ 'active' if request.endpoint == 'reports' }}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
+        <a href="{{ url_for('reports.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('reports') }}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
     </nav>
     {% endif %}
 
@@ -497,6 +633,31 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.sidebar-toggle-btn').forEach(function(el) {
                 el.addEventListener('click', toggleSidebar);
+            });
+
+            // Accessibility: mark the current nav item for screen readers
+            document.querySelectorAll('.nav-link.active, .mobile-bottom-nav a.active').forEach(function(el) {
+                el.setAttribute('aria-current', 'page');
+            });
+
+            // Dark mode toggle (persisted)
+            var themeToggle = document.getElementById('themeToggle');
+            var savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle?.querySelector('i')?.classList.replace('bi-moon-stars', 'bi-sun');
+            }
+            themeToggle?.addEventListener('click', function() {
+                var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                    this.querySelector('i')?.classList.replace('bi-sun', 'bi-moon-stars');
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    this.querySelector('i')?.classList.replace('bi-moon-stars', 'bi-sun');
+                }
             });
             document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
             document.querySelectorAll('.avatar img[data-fallback]').forEach(function(img) {

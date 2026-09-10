@@ -6,7 +6,12 @@
         <h3><i class="bi bi-calendar-event"></i> Events</h3>
         <div class="subtitle">Create collection events with custom fees and deadlines</div>
     </div>
-    <button class="btn btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> New Event</button>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('events.export_all_excel') }}" class="btn btn-modern-outline btn-modern-sm" title="Export All Events to Multi-Sheet Excel">
+            <i class="bi bi-file-earmark-spreadsheet text-success"></i> Master Excel (All Events)
+        </a>
+        <button class="btn btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> New Event</button>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -17,40 +22,40 @@
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h5 class="mb-0" style="font-size:1rem;font-weight:700;">
                         {{ e.title }}
-                        <button class="btn btn-link p-0 ms-1" style="font-size:.7rem;color:#94a3b8;text-decoration:none;vertical-align:middle;" data-bs-toggle="modal" data-bs-target="#editModal{{ e._id }}" title="Edit event"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-link p-0 ms-1" style="font-size:.7rem;color:var(--text-muted);text-decoration:none;vertical-align:middle;" data-bs-toggle="modal" data-bs-target="#editModal{{ e._id }}" title="Edit event" aria-label="Edit event"><i class="bi bi-pencil"></i></button>
                     </h5>
-                    <span class="badge" style="background:{{ '#d1fae5;color:#065f46' if e.status=='active' else '#f1f5f9;color:#94a3b8' }};">{{ e.status|title }}</span>
+                    <span class="badge {{ 'badge-income' if e.status=='active' else 'badge-secondary' }}">{{ e.status|title }}</span>
                 </div>
                 <div class="mb-3">
                     <div style="font-size:1.4rem;font-weight:800;color:var(--primary);">₱{{ "%.2f"|format(e.amount) }}</div>
                     {% if e.deadline %}
-                    <div style="font-size:.75rem;color:#64748b;margin-top:2px;"><i class="bi bi-clock"></i> Deadline: {{ e.deadline }}</div>
+                    <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px;"><i class="bi bi-clock"></i> Deadline: {{ e.deadline }}</div>
                     {% endif %}
                 </div>
 
                 {% set total_target = e.amount * e.total_students %}
                 <div class="d-flex justify-content-between mb-1" style="font-size:.75rem;">
-                    <span style="color:#64748b;">Collection</span>
+                    <span style="color:var(--text-muted);">Collection</span>
                     <span><strong>{{ e.paid_count }}</strong> / {{ e.total_students }} students · <strong>₱{{ "%.2f"|format(e.collected) }}</strong> / ₱{{ "%.2f"|format(total_target) }}</span>
                 </div>
                 <div class="progress-modern mb-1">
                     <div class="progress-bar-modern" style="width:{{ (e.collected / total_target * 100) if total_target > 0 else 0 }}%"></div>
                 </div>
-                <div style="font-size:.7rem;color:#94a3b8;margin-bottom:.75rem;">
+                <div style="font-size:.7rem;color:var(--text-muted);margin-bottom:.75rem;">
                     ₱{{ "%.2f"|format(e.collected) }} collected of ₱{{ "%.2f"|format(total_target) }} target
                 </div>
 
                 {% if e.fully_paid and not e.allocation %}
-                <div class="p-3 mb-2" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
-                    <div style="font-size:.8rem;font-weight:600;color:#065f46;margin-bottom:8px;"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> All students fully paid!</div>
-                    <div style="font-size:.75rem;color:#475569;margin-bottom:8px;">Where should ₱{{ "%.2f"|format(e.collected) }} go?</div>
+                <div class="p-3 mb-2" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:10px;">
+                    <div style="font-size:.8rem;font-weight:600;color:var(--accent);margin-bottom:8px;"><i class="bi bi-check-circle-fill"></i> All students fully paid!</div>
+                    <div style="font-size:.75rem;color:var(--text-secondary);margin-bottom:8px;">Where should ₱{{ "%.2f"|format(e.collected) }} go?</div>
                     <div class="d-flex gap-1">
-                        <form method="POST" action="{{ url_for('finalize_event', id=e._id) }}" class="d-inline">
+                        <form method="POST" action="{{ url_for('events.finalize', id=e._id) }}" class="d-inline">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="allocation" value="balance">
                             <button type="submit" class="btn btn-modern-primary btn-modern-sm" style="font-size:.7rem;padding:.3rem .6rem;"><i class="bi bi-piggy-bank"></i> Keep in Balance</button>
                         </form>
-                        <form method="POST" action="{{ url_for('finalize_event', id=e._id) }}" class="d-inline">
+                        <form method="POST" action="{{ url_for('events.finalize', id=e._id) }}" class="d-inline">
                             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                             <input type="hidden" name="allocation" value="expense">
                             <button type="submit" class="btn btn-modern-outline btn-modern-sm" style="font-size:.7rem;padding:.3rem .6rem;border-color:#fca5a5;color:#dc2626;"><i class="bi bi-arrow-up-right-square"></i> Record as Expense</button>
@@ -61,19 +66,30 @@
 
                 <div class="mt-auto d-flex gap-1 flex-wrap">
                     {% if e.allocation %}
-                    <span class="badge" style="background:{{ '#d1fae5;color:#065f46' if e.allocation == 'balance' else '#fee2e2;color:#991b1b' }};font-size:.7rem;">
+                    <span class="badge {{ 'badge-income' if e.allocation == 'balance' else 'badge-expense' }}" style="font-size:.7rem;">
                         <i class="bi {{ 'bi-piggy-bank' if e.allocation == 'balance' else 'bi-arrow-up-right-square' }}"></i>
                         {{ 'In Balance' if e.allocation == 'balance' else 'Recorded as Expense' }}
                     </span>
                     {% endif %}
                     {% if e.fully_paid and not e.allocation %}
-                    <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:.7rem;"><i class="bi bi-check-all"></i> Fully Paid</span>
+                    <span class="badge" style="background:rgba(14,165,233,.15);color:#38bdf8;border:1px solid rgba(14,165,233,.3);font-size:.7rem;"><i class="bi bi-check-all"></i> Fully Paid</span>
                     {% endif %}
-                    <a href="{{ url_for('payments', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
+                    <a href="{{ url_for('payments.index', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
+                    <div class="dropdown d-inline">
+                        <button class="btn btn-modern-outline btn-modern-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Export Event Payments">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem;">
+                            <li><a class="dropdown-item" href="{{ url_for('events.export_csv', id=e._id) }}"><i class="bi bi-filetype-csv text-primary me-2"></i>Export CSV</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('events.export_excel', id=e._id) }}"><i class="bi bi-file-earmark-excel text-success me-2"></i>Export Excel (.xlsx)</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('events.print_roster', id=e._id) }}" target="_blank"><i class="bi bi-printer text-dark me-2"></i>Print / Save PDF Form</a></li>
+                        </ul>
+                    </div>
                     {% if e.status == 'active' %}
-                    <form method="POST" action="{{ url_for('close_event', id=e._id) }}" class="d-inline confirm-close"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close"><i class="bi bi-x-circle"></i></button></form>
+                    <form method="POST" action="{{ url_for('events.close', id=e._id) }}" class="d-inline confirm-close"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close event" aria-label="Close event"><i class="bi bi-x-circle"></i></button></form>
                     {% endif %}
-                    <form method="POST" action="{{ url_for('delete_event', id=e._id) }}" class="d-inline confirm-delete" data-name="{{ e.title }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                    <form method="POST" action="{{ url_for('events.delete', id=e._id) }}" class="d-inline confirm-delete" data-name="{{ e.title }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete event" aria-label="Delete event"><i class="bi bi-trash"></i></button></form>
                 </div>
             </div>
         </div>
@@ -89,13 +105,13 @@
 <div class="modal fade modal-modern" id="addModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-calendar-plus"></i> New Collection Event</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('add_event') }}">
+        <form method="POST" action="{{ url_for('events.add') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
-                <div class="mb-3"><label class="form-label-modern">Event Title</label><input type="text" name="title" class="form-control form-modern" required placeholder="e.g. Field Trip, Organization Fee"></div>
+                <div class="mb-3"><label class="form-label-modern" for="ev-title">Event Title</label><input type="text" id="ev-title" name="title" class="form-control form-modern" required placeholder="e.g. Field Trip, Organization Fee"></div>
                 <div class="row g-2">
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Amount to Pay (₱)</label><input type="number" name="amount" class="form-control form-modern" step="0.01" min="0.01" required placeholder="150.00"></div></div>
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Deadline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input type="date" name="deadline" class="form-control form-modern"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="ev-amount">Amount to Pay (₱)</label><input type="number" id="ev-amount" name="amount" class="form-control form-modern" step="0.01" min="0.01" required placeholder="150.00"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="ev-deadline">Deadline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input type="date" id="ev-deadline" name="deadline" class="form-control form-modern"></div></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -110,13 +126,13 @@
 <div class="modal fade modal-modern" id="editModal{{ e._id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Event</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('edit_event', id=e._id) }}">
+        <form method="POST" action="{{ url_for('events.edit', id=e._id) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
-                <div class="mb-3"><label class="form-label-modern">Event Title</label><input type="text" name="title" class="form-control form-modern" value="{{ e.title }}" required></div>
+                <div class="mb-3"><label class="form-label-modern" for="ev-edit-title-{{ e._id }}">Event Title</label><input type="text" id="ev-edit-title-{{ e._id }}" name="title" class="form-control form-modern" value="{{ e.title }}" required></div>
                 <div class="row g-2">
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Amount to Pay (₱)</label><input type="number" name="amount" class="form-control form-modern" step="0.01" min="0.01" value="{{ e.amount }}" required></div></div>
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Deadline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input type="date" name="deadline" class="form-control form-modern" value="{{ e.deadline }}"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="ev-edit-amount-{{ e._id }}">Amount to Pay (₱)</label><input type="number" id="ev-edit-amount-{{ e._id }}" name="amount" class="form-control form-modern" step="0.01" min="0.01" value="{{ e.amount }}" required></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="ev-edit-deadline-{{ e._id }}">Deadline <span style="color:#94a3b8;font-weight:400;">(optional)</span></label><input type="date" id="ev-edit-deadline-{{ e._id }}" name="deadline" class="form-control form-modern" value="{{ e.deadline }}"></div></div>
                 </div>
             </div>
             <div class="modal-footer">

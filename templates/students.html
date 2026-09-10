@@ -12,20 +12,20 @@
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern datatable">
+            <table class="table table-modern datatable" aria-label="Student members">
                 <thead><tr><th>Name</th><th>ID</th><th>Course</th><th>Year</th><th>Contact</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
                 <tbody>
                     {% for s in students %}
                     <tr class="{{ 'opacity-50' if not s.is_active }}">
                         <td><strong>{{ s.name }}</strong></td>
-                        <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
+                        <td><code class="code-modern">{{ s.student_id }}</code></td>
                         <td>{{ s.course or '—' }}</td>
                         <td>{{ s.year or '—' }}</td>
-                        <td style="font-size:.8rem;">{% if s.email %}<i class="bi bi-envelope" style="color:#94a3b8;"></i> {{ s.email }}<br>{% endif %}{% if s.phone %}<i class="bi bi-telephone" style="color:#94a3b8;"></i> {{ s.phone }}{% endif %}{% if not s.email and not s.phone %}—{% endif %}</td>
-                        <td><span class="badge" style="background:{{ '#d1fae5;color:#065f46' if s.is_active else '#f1f5f9;color:#94a3b8' }};">{{ 'Active' if s.is_active else 'Inactive' }}</span></td>
+                        <td style="font-size:.8rem;">{% if s.email %}<i class="bi bi-envelope" style="color:var(--text-muted);"></i> {{ s.email }}<br>{% endif %}{% if s.phone %}<i class="bi bi-telephone" style="color:var(--text-muted);"></i> {{ s.phone }}{% endif %}{% if not s.email and not s.phone %}—{% endif %}</td>
+                        <td><span class="badge {{ 'badge-income' if s.is_active else 'badge-status-pending' }}">{{ 'Active' if s.is_active else 'Inactive' }}</span></td>
                         <td>
-                            <button class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ s._id }}" title="Edit"><i class="bi bi-pencil"></i></button>
-                            <form method="POST" action="{{ url_for('delete_student', id=s._id) }}" class="d-inline confirm-delete" data-name="{{ s.name }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete"><i class="bi bi-trash"></i></button></form>
+                            <button class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ s._id }}" title="Edit student" aria-label="Edit student"><i class="bi bi-pencil"></i></button>
+                            <form method="POST" action="{{ url_for('students.delete', id=s._id) }}" class="d-inline confirm-delete" data-name="{{ s.name }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete student" aria-label="Delete student"><i class="bi bi-trash"></i></button></form>
                         </td>
                     </tr>
                     {% endfor %}
@@ -41,18 +41,18 @@
 <div class="modal fade modal-modern" id="addModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> Add Student</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('add_student') }}">
+        <form method="POST" action="{{ url_for('students.add') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
-                <div class="mb-3"><label class="form-label-modern">Student ID</label><input type="text" name="student_id" class="form-control form-modern" required placeholder="e.g. 2024-0001"></div>
-                <div class="mb-3"><label class="form-label-modern">Full Name</label><input type="text" name="name" class="form-control form-modern" required placeholder="Last, First Middle"></div>
+                <div class="mb-3"><label class="form-label-modern" for="st-id">Student ID</label><input type="text" id="st-id" name="student_id" class="form-control form-modern" required placeholder="e.g. 2024-0001"></div>
+                <div class="mb-3"><label class="form-label-modern" for="st-name">Full Name</label><input type="text" id="st-name" name="name" class="form-control form-modern" required placeholder="Last, First Middle"></div>
                 <div class="row g-2">
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Course</label><input type="text" name="course" class="form-control form-modern" placeholder="e.g. BSCS"></div></div>
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Year</label><select name="year" class="form-control form-modern"><option value="">Select</option><option>1st</option><option>2nd</option><option>3rd</option><option>4th</option><option>5th</option></select></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-course">Course</label><input type="text" id="st-course" name="course" class="form-control form-modern" placeholder="e.g. BSCS"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-year">Year</label><select id="st-year" name="year" class="form-control form-modern"><option value="">Select</option><option>1st</option><option>2nd</option><option>3rd</option><option>4th</option><option>5th</option></select></div></div>
                 </div>
                 <div class="row g-2">
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Email</label><input type="email" name="email" class="form-control form-modern" placeholder="student@school.edu"></div></div>
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Phone</label><input type="text" name="phone" class="form-control form-modern" placeholder="09XX-XXX-XXXX"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-email">Email</label><input type="email" id="st-email" name="email" class="form-control form-modern" placeholder="student@school.edu"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-phone">Phone</label><input type="text" id="st-phone" name="phone" class="form-control form-modern" placeholder="09XX-XXX-XXXX"></div></div>
                 </div>
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-modern-primary">Add Student</button></div>
@@ -64,17 +64,17 @@
 <div class="modal fade modal-modern" id="editModal{{ s._id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Student</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('edit_student', id=s._id) }}">
+        <form method="POST" action="{{ url_for('students.edit', id=s._id) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
-                <div class="mb-3"><label class="form-label-modern">Full Name</label><input type="text" name="name" class="form-control form-modern" value="{{ s.name }}" required></div>
+                <div class="mb-3"><label class="form-label-modern" for="st-edit-name-{{ s._id }}">Full Name</label><input type="text" id="st-edit-name-{{ s._id }}" name="name" class="form-control form-modern" value="{{ s.name }}" required></div>
                 <div class="row g-2">
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Course</label><input type="text" name="course" class="form-control form-modern" value="{{ s.course or '' }}"></div></div>
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Year</label><select name="year" class="form-control form-modern"><option value="">—</option>{% for y in ['1st','2nd','3rd','4th','5th'] %}<option {{ 'selected' if s.year==y }}>{{ y }}</option>{% endfor %}</select></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-edit-course-{{ s._id }}">Course</label><input type="text" id="st-edit-course-{{ s._id }}" name="course" class="form-control form-modern" value="{{ s.course or '' }}"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-edit-year-{{ s._id }}">Year</label><select id="st-edit-year-{{ s._id }}" name="year" class="form-control form-modern"><option value="">—</option>{% for y in ['1st','2nd','3rd','4th','5th'] %}<option {{ 'selected' if s.year==y }}>{{ y }}</option>{% endfor %}</select></div></div>
                 </div>
                 <div class="row g-2">
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Email</label><input type="email" name="email" class="form-control form-modern" value="{{ s.email or '' }}"></div></div>
-                    <div class="col"><div class="mb-3"><label class="form-label-modern">Phone</label><input type="text" name="phone" class="form-control form-modern" value="{{ s.phone or '' }}"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-edit-email-{{ s._id }}">Email</label><input type="email" id="st-edit-email-{{ s._id }}" name="email" class="form-control form-modern" value="{{ s.email or '' }}"></div></div>
+                    <div class="col"><div class="mb-3"><label class="form-label-modern" for="st-edit-phone-{{ s._id }}">Phone</label><input type="text" id="st-edit-phone-{{ s._id }}" name="phone" class="form-control form-modern" value="{{ s.phone or '' }}"></div></div>
                 </div>
                 <div class="form-check mt-2"><input type="checkbox" name="is_active" class="form-check-input" value="1" id="active{{ s._id }}" {{ 'checked' if s.is_active }}><label class="form-check-label" for="active{{ s._id }}" style="font-size:.85rem;">Active Member</label></div>
             </div>

@@ -10,10 +10,10 @@
 
 <div class="card-modern mb-4 animate-in">
     <div class="card-body-modern">
-        <form method="GET" action="{{ url_for('payments') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ url_for('payments.index') }}" class="row g-3 align-items-end">
             <div class="col-md-6">
-                <label class="form-label-modern">Select Event</label>
-                <select name="event_id" class="form-control form-modern event-select">
+                <label class="form-label-modern" for="pmt-event">Select Event</label>
+                <select id="pmt-event" name="event_id" class="form-control form-modern event-select">
                     <option value="">— Choose an event —</option>
                     {% for e in events %}
                     <option value="{{ e._id }}" {{ 'selected' if selected_event_id and selected_event_id|string == e._id|string }}>{{ e.title }} — ₱{{ "%.2f"|format(e.amount) }}{% if e.deadline %} (due: {{ e.deadline }}){% endif %}</option>
@@ -26,7 +26,7 @@
                 <div class="d-flex gap-2">
                     <span class="badge badge-income fs-6" style="font-size:.8rem!important;padding:.45rem 1rem;">Target: ₱{{ "%.2f"|format(event.amount) }}</span>
                     {% if event.deadline %}
-                    <span class="badge fs-6" style="font-size:.8rem!important;padding:.45rem 1rem;background:#f1f5f9;color:#475569;">Deadline: {{ event.deadline }}</span>
+                    <span class="badge fs-6 btn-modern-outline" style="font-size:.8rem!important;padding:.45rem 1rem;">Deadline: {{ event.deadline }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -37,17 +37,36 @@
 
 {% if event %}
 <div class="card-modern animate-in">
-    <div class="card-header-modern d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-people" style="color:var(--primary)"></i> Students — {{ event.title }}</span>
-        <span class="badge" style="background:#dbeafe;color:#1e40af;">{{ payments|selectattr('locked','equalto',True)|list|length }} / {{ students|length }} fully paid</span>
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span><i class="bi bi-people" style="color:var(--primary)"></i> Students — {{ event.title }}</span>
+            <span class="badge" style="background:#dbeafe;color:#1e40af;">{{ payments|selectattr('locked','equalto',True)|list|length }} / {{ students|length }} fully paid</span>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="dropdown">
+                <button class="btn btn-modern-outline btn-modern-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-download"></i> Export Event
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem;">
+                    <li><a class="dropdown-item" href="{{ url_for('events.export_csv', id=event._id) }}"><i class="bi bi-filetype-csv text-primary me-2"></i>CSV Roster</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('events.export_excel', id=event._id) }}"><i class="bi bi-file-earmark-excel text-success me-2"></i>Excel (.xlsx)</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('events.print_roster', id=event._id) }}" target="_blank"><i class="bi bi-printer text-dark me-2"></i>Print / Save PDF</a></li>
+                </ul>
+            </div>
+            {% if can_manage_data() %}
+            <button type="button" id="btnSelectAllPending" class="btn btn-modern-outline btn-modern-sm" title="Select all unpaid students"><i class="bi bi-check2-square"></i> Select Pending</button>
+            <button type="button" id="btnFillTarget" class="btn btn-modern-outline btn-modern-sm" title="Fill full remaining fee for selected"><i class="bi bi-magic"></i> Auto-Fill Due</button>
+            {% endif %}
+        </div>
     </div>
     <div class="card-body-modern p-0">
-        {% if can_manage_data() %}<form method="POST" action="{{ url_for('confirm_payments') }}" id="paymentForm">
+        {% if can_manage_data() %}<form method="POST" action="{{ url_for('payments.confirm') }}" id="paymentForm">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="event_id" value="{{ event._id }}">
         {% endif %}
             <div class="table-responsive">
-                <table class="table table-modern">
+                <table class="table table-modern" aria-label="Payments per student">
                     <thead><tr><th style="width:40px"></th><th>Name</th><th>Student ID</th><th class="d-none d-sm-table-cell">Course</th><th>Progress</th><th style="min-width:120px">Amount</th><th>Status</th><th class="d-none d-sm-table-cell">Confirmed By</th><th style="width:100px" class="d-none d-sm-table-cell">Actions</th></tr></thead>
                     <tbody>
                         {% for s in students %}
@@ -60,20 +79,20 @@
                                 {% if is_locked %}
                                 <i class="bi bi-check-circle-fill" style="color:#059669;"></i>
                                 {% elif can_manage_data() %}
-                                <input type="checkbox" name="selected" value="{{ s._id }}" class="form-check-input" style="width:1.1rem;height:1.1rem;cursor:pointer;">
+                                 <input type="checkbox" name="selected" value="{{ s._id }}" class="form-check-input" style="width:1.1rem;height:1.1rem;cursor:pointer;" aria-label="Select {{ s.name }} for payment">
                                 {% endif %}
                             </td>
                             <td><strong>{{ s.name }}</strong></td>
-                            <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:.75rem;">{{ s.student_id }}</code></td>
+                            <td><code class="code-modern">{{ s.student_id }}</code></td>
                             <td class="d-none d-sm-table-cell">{{ s.course or '—' }}</td>
                             <td style="min-width:140px">
                                 {% if payment %}
                                 <div style="font-size:.75rem;font-weight:600;margin-bottom:2px;">₱{{ "%.2f"|format(amount_paid) }} / ₱{{ "%.2f"|format(event.amount) }}</div>
-                                <div class="progress-modern" style="height:6px;background:#e2e8f0;border-radius:4px;">
+                                <div class="progress-modern" style="height:6px;background:var(--border-color);border-radius:4px;">
                                     <div class="progress-bar-modern" style="width:{{ pct }}%;height:6px;border-radius:4px;background:{{ '#059669' if is_locked else '#3b82f6' }};"></div>
                                 </div>
                                 {% else %}
-                                <span style="color:#94a3b8;font-size:.8rem;">₱0 / ₱{{ "%.2f"|format(event.amount) }}</span>
+                                <span style="color:var(--text-muted);font-size:.8rem;">₱0 / ₱{{ "%.2f"|format(event.amount) }}</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -81,21 +100,21 @@
                                 <span class="badge badge-income" style="font-size:.75rem;">Fully Paid</span>
                                 {% elif can_manage_data() %}
                                 <div class="d-flex align-items-center gap-1">
-                                    <span style="font-size:.8rem;color:#64748b;">₱</span>
+                                    <span style="font-size:.8rem;color:var(--text-muted);">₱</span>
                                     <input type="hidden" name="student_ids" value="{{ s._id }}" class="sid-input">
-                                    <input type="number" name="amounts" value="0" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern amt-input" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0">
+                                     <input type="number" name="amounts" value="0" step="0.01" min="0" max="{{ event.amount }}" class="form-control form-modern amt-input" style="width:80px;font-size:.8rem;padding:.25rem .4rem;" placeholder="0" data-remaining="{{ (event.amount - amount_paid)|round(2) }}" aria-label="Amount paid by {{ s.name }}">
                                 </div>
                                 {% else %}
-                                <span style="color:#94a3b8;">—</span>
+                                <span style="color:var(--text-muted);">—</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if is_locked %}
                                 <span class="badge badge-income">Paid</span>
                                 {% elif payment %}
-                                <span class="badge" style="background:#fef3c7;color:#92400e;">Partial</span>
+                                <span class="badge badge-status-partial">Partial</span>
                                 {% else %}
-                                <span class="badge" style="background:#f1f5f9;color:#64748b;">Pending</span>
+                                <span class="badge badge-status-pending">Pending</span>
                                 {% endif %}
                             </td>
                             <td class="d-none d-sm-table-cell" style="font-size:.75rem;color:#64748b;">
@@ -103,7 +122,7 @@
                             </td>
                             <td class="d-none d-sm-table-cell">
                                 {% if is_locked and can_override() %}
-                                <button type="button" class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#unconfirmModal{{ payment._id }}" title="Override"><i class="bi bi-unlock"></i></button>
+                                <button type="button" class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#unconfirmModal{{ payment._id }}" title="Override payment" aria-label="Override payment for {{ s.name }}"><i class="bi bi-unlock"></i></button>
                                 {% endif %}
                                 {% if not is_locked %}
                                 <span style="color:#94a3b8;font-size:.7rem;">—</span>
@@ -137,13 +156,13 @@
 <div class="modal fade modal-modern" id="unconfirmModal{{ payment._id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-unlock"></i> Override Payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('unconfirm_payment', payment_id=payment._id) }}">
+        <form method="POST" action="{{ url_for('payments.unconfirm', payment_id=payment._id) }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <p style="font-size:.9rem;">Unlock and reset payment for <strong>{{ s.name }}</strong>?</p>
                 <p style="font-size:.8rem;color:#64748b;">This will reset their paid amount to ₱0. Only admins, mayors, and treasurers can do this.</p>
-                <div class="mb-3"><label class="form-label-modern">Reason for override</label>
-                    <textarea name="notes" class="form-control form-modern" rows="2" required placeholder="Explain why this payment is being unlocked"></textarea>
+                <div class="mb-3"><label class="form-label-modern" for="pmt-notes-{{ payment._id }}">Reason for override</label>
+                    <textarea id="pmt-notes-{{ payment._id }}" name="notes" class="form-control form-modern" rows="2" required placeholder="Explain why this payment is being unlocked"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -166,13 +185,41 @@
 
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
+    const targetAmount = {{ event.amount if event else 0 }};
+
     document.querySelectorAll('input[name="selected"]').forEach(function(cb) {
         cb.addEventListener('change', function() {
             var row = this.closest('tr');
             var sid = row.querySelector('.sid-input');
             var amt = row.querySelector('.amt-input');
             if (sid) sid.disabled = !this.checked;
-            if (amt) amt.disabled = !this.checked;
+            if (amt) {
+                amt.disabled = !this.checked;
+                if (this.checked && (parseFloat(amt.value) === 0 || !amt.value)) {
+                    var remaining = parseFloat(amt.dataset.remaining || targetAmount);
+                    amt.value = remaining > 0 ? remaining.toFixed(2) : targetAmount.toFixed(2);
+                }
+            }
+        });
+    });
+
+    document.getElementById('btnSelectAllPending')?.addEventListener('click', function() {
+        document.querySelectorAll('input[name="selected"]').forEach(function(cb) {
+            if (!cb.checked) {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+
+    document.getElementById('btnFillTarget')?.addEventListener('click', function() {
+        document.querySelectorAll('input[name="selected"]:checked').forEach(function(cb) {
+            var row = cb.closest('tr');
+            var amt = row.querySelector('.amt-input');
+            if (amt) {
+                var remaining = parseFloat(amt.dataset.remaining || targetAmount);
+                amt.value = remaining > 0 ? remaining.toFixed(2) : targetAmount.toFixed(2);
+            }
         });
     });
 });

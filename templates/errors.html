@@ -18,7 +18,7 @@
     <div class="card">
         <div class="code">{{ code }}</div>
         <div class="msg">{{ message }}</div>
-        <a href="{{ url_for('dashboard') if current_user.is_authenticated else url_for('login') }}" class="btn">Go Home</a>
+        <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}" class="btn">Go Home</a>
     </div>
 </body>
 </html>

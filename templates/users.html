@@ -25,9 +25,9 @@
 <div class="card-modern mb-4">
     <div class="card-body-modern d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div><h6 class="mb-1"><i class="bi bi-image" style="color:var(--primary)"></i> Application Logo</h6><div class="subtitle">Displayed on login and in sidebar. Maximum file size: 2 MB. Set <code>LOGO_UPLOAD_DIR</code> to persistent storage on production.</div></div>
-        <form method="POST" action="{{ url_for('upload_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+        <form method="POST" action="{{ url_for('admin.upload_logo') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-            <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="form-control form-modern" required>
+            <input type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="form-control form-modern" required aria-label="Application logo file">
             <button type="submit" class="btn btn-modern-primary btn-modern-sm"><i class="bi bi-upload"></i> Upload</button>
         </form>
     </div>
@@ -42,7 +42,7 @@
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern users-table">
+            <table class="table table-modern users-table" aria-label="System users">
                 <thead><tr><th>Profile</th><th>Username</th><th>Role</th><th>Created</th><th>Assign Role</th></tr></thead>
                 <tbody>
                     {% for u in users %}
@@ -51,14 +51,14 @@
                         <td><span class="badge" style="background:{{ {'admin':'#fce7f3;color:#9d174d','mayor':'#ede9fe;color:#6d28d9','treasurer':'#d1fae5;color:#047857'}.get(u.role, '#dbeafe;color:#1e40af') }};">{{ u.role|upper }}</span></td>
                         <td style="font-size:.8rem;color:#64748b;">{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '—' }}</td>
                         <td>
-                            <form method="POST" action="{{ url_for('assign_user_role', id=u._id) }}" class="d-flex gap-2 align-items-center role-form">
+                            <form method="POST" action="{{ url_for('admin.assign_user_role', id=u._id) }}" class="d-flex gap-2 align-items-center role-form">
                                 <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-                                <select name="role" class="form-control form-modern" style="min-width:130px;font-size:.75rem;">
+                                <select name="role" class="form-control form-modern" style="min-width:130px;font-size:.75rem;" aria-label="Assign role for {{ u.username }}">
                                     {% for role in ['staff', 'treasurer', 'mayor', 'admin'] %}
                                     <option value="{{ role }}" {{ 'selected' if u.role == role }}>{{ role|title }}</option>
                                     {% endfor %}
                                 </select>
-                                <button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Assign role"><i class="bi bi-check-lg"></i></button>
+                                <button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Assign role" aria-label="Assign role for {{ u.username }}"><i class="bi bi-check-lg"></i></button>
                             </form>
                         </td></tr>
                     {% endfor %}
@@ -71,13 +71,13 @@
 <div class="modal fade modal-modern" id="addModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-plus"></i> New User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <form method="POST" action="{{ url_for('add_user') }}">
+        <form method="POST" action="{{ url_for('admin.add_user') }}">
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
-                <div class="mb-3"><label class="form-label-modern">Username</label><input type="text" name="username" class="form-control form-modern" required placeholder="Choose a username"></div>
-                <div class="mb-3"><label class="form-label-modern">Password</label><input type="password" name="password" class="form-control form-modern" required minlength="4"></div>
-                <div class="mb-3"><label class="form-label-modern">Role</label>
-                    <select name="role" class="form-control form-modern">
+                <div class="mb-3"><label class="form-label-modern" for="usr-username">Username</label><input type="text" id="usr-username" name="username" class="form-control form-modern" required placeholder="Choose a username"></div>
+                <div class="mb-3"><label class="form-label-modern" for="usr-password">Password</label><input type="password" id="usr-password" name="password" class="form-control form-modern" required minlength="4"></div>
+                <div class="mb-3"><label class="form-label-modern" for="usr-role">Role</label>
+                    <select id="usr-role" name="role" class="form-control form-modern">
                         <option value="staff">Staff (Normal User)</option>
                         <option value="treasurer">Treasurer</option>
                         <option value="mayor">Mayor</option>
