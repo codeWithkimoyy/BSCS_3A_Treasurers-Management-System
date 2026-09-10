@@ -310,9 +310,10 @@
                 width: 74px !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-brand {
-                padding: 1.25rem 0.5rem 1rem !important;
+                padding: 1.15rem 0.5rem !important;
                 justify-content: center !important;
             }
+            .app-wrapper.sidebar-collapsed .sidebar-brand .brand-content,
             .app-wrapper.sidebar-collapsed .sidebar-brand .brand-text,
             .app-wrapper.sidebar-collapsed .sidebar-brand .logo-icon,
             .app-wrapper.sidebar-collapsed .sidebar-nav .nav-label,
@@ -322,7 +323,8 @@
                 display: none !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-brand .google-hamburger-btn {
-                margin: 0 !important;
+                margin: 0 auto !important;
+                display: inline-flex !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-nav {
                 padding: 0.75rem 0.4rem !important;
@@ -1032,16 +1034,15 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand d-flex align-items-center justify-content-between">
                 <div class="brand-content d-flex align-items-center">
-                    <button type="button" class="google-hamburger-btn sidebar-toggle-btn flex-shrink-0" title="Toggle navigation menu" aria-label="Toggle navigation menu">
-                        <i class="bi bi-list"></i>
-                    </button>
                     <div class="logo-icon flex-shrink-0">{% if has_logo|default(false) %}<img src="{{ url_for('admin.app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
                     <div class="brand-text">
                         <h5>Student Treasurer</h5>
                         <small>Financial Management System</small>
                     </div>
                 </div>
-                <button class="d-md-none btn p-1 sidebar-toggle-btn ms-auto" style="color:rgba(255,255,255,.5);font-size:1.3rem;border:none;background:none;line-height:1;"><i class="bi bi-x-lg"></i></button>
+                <button type="button" class="google-hamburger-btn sidebar-toggle-btn flex-shrink-0 ms-2" title="Toggle navigation menu" aria-label="Toggle navigation menu">
+                    <i class="bi bi-list"></i>
+                </button>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-label">Main</div>
