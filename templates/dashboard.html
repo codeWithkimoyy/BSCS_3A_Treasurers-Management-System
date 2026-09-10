@@ -3,10 +3,21 @@
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-        <h3><i class="bi bi-speedometer2"></i> Dashboard</h3>
+        <h3><i class="bi bi-grid-1x2-fill"></i> Dashboard</h3>
         <div class="subtitle">{{ now.strftime('%A, %B %d, %Y') }}</div>
     </div>
-    {% if can_manage_data() %}<a href="{{ url_for('reports.export') }}" class="btn btn-modern-outline btn-modern-sm"><i class="bi bi-download"></i> Export</a>{% endif %}
+    {% if can_manage_data() %}
+    <div class="dropdown">
+        <button class="btn btn-modern-outline btn-modern-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-download"></i> Quick Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem;">
+            <li><a class="dropdown-item" href="{{ url_for('reports.export') }}"><i class="bi bi-filetype-csv text-success me-2"></i>All Ledger CSV</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('reports.export_liquidation') }}"><i class="bi bi-file-earmark-text text-danger me-2"></i>Outflows Liquidation CSV</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('events.export_all_excel') }}"><i class="bi bi-file-earmark-spreadsheet text-success me-2"></i>Master Events Excel (.xlsx)</a></li>
+        </ul>
+    </div>
+    {% endif %}
 </div>
 
 {% if not can_manage_data() %}

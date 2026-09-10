@@ -418,10 +418,115 @@
         @media (min-width: 768px) { .main-content { padding-bottom: 1.5rem; } }
         @media (max-width: 767.98px) { .main-content { padding: 1rem 1rem 5rem; } }
 
-        .page-header { margin-bottom: 1.5rem; }
-        .page-header h3 { font-weight: 700; font-size: 1.4rem; color: var(--text-main); display: flex; align-items: center; gap: .5rem; }
-        .page-header h3 i { color: var(--primary); }
-        .page-header .subtitle { color: var(--text-muted); font-size: .85rem; margin-top: .15rem; }
+        .page-header { margin-bottom: 1.6rem; }
+        .page-header h3 {
+            font-weight: 800;
+            font-size: 1.45rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            letter-spacing: -0.4px;
+        }
+        .page-header h3 i {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(14, 165, 233, 0.15));
+            color: var(--primary);
+            border: 1px solid rgba(79, 70, 229, 0.18);
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+        }
+        [data-theme="dark"] .page-header h3 i {
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.18), rgba(14, 165, 233, 0.2)) !important;
+            color: var(--primary-light) !important;
+            border-color: rgba(129, 140, 248, 0.3) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+        }
+        .page-header .subtitle {
+            color: var(--text-muted);
+            font-size: .85rem;
+            margin-top: .25rem;
+            font-weight: 450;
+        }
+
+        .student-avatar-circle {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.25);
+            box-shadow: 0 2px 6px rgba(0,0,0,.15);
+        }
+        .badge-role-admin {
+            background-color: rgba(124, 58, 237, 0.14) !important;
+            color: #7c3aed !important;
+            border: 1px solid rgba(124, 58, 237, 0.28) !important;
+            font-weight: 600;
+            font-size: 0.72rem;
+            padding: .25rem .65rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        [data-theme="dark"] .badge-role-admin {
+            background-color: rgba(167, 139, 250, 0.18) !important;
+            color: #c4b5fd !important;
+            border-color: rgba(167, 139, 250, 0.35) !important;
+        }
+        .badge-role-mayor {
+            background-color: rgba(14, 165, 233, 0.14) !important;
+            color: #0284c7 !important;
+            border: 1px solid rgba(14, 165, 233, 0.28) !important;
+            font-weight: 600;
+            font-size: 0.72rem;
+            padding: .25rem .65rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        [data-theme="dark"] .badge-role-mayor {
+            background-color: rgba(14, 165, 233, 0.18) !important;
+            color: #7dd3fc !important;
+            border-color: rgba(14, 165, 233, 0.35) !important;
+        }
+        .badge-role-treasurer {
+            background-color: rgba(16, 185, 129, 0.14) !important;
+            color: #059669 !important;
+            border: 1px solid rgba(16, 185, 129, 0.28) !important;
+            font-weight: 600;
+            font-size: 0.72rem;
+            padding: .25rem .65rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        [data-theme="dark"] .badge-role-treasurer {
+            background-color: rgba(16, 185, 129, 0.18) !important;
+            color: #6ee7b7 !important;
+            border-color: rgba(16, 185, 129, 0.35) !important;
+        }
+        .badge-role-staff {
+            background-color: rgba(245, 158, 11, 0.14) !important;
+            color: #d97706 !important;
+            border: 1px solid rgba(245, 158, 11, 0.28) !important;
+            font-weight: 600;
+            font-size: 0.72rem;
+            padding: .25rem .65rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        [data-theme="dark"] .badge-role-staff {
+            background-color: rgba(245, 158, 11, 0.18) !important;
+            color: #fcd34d !important;
+            border-color: rgba(245, 158, 11, 0.35) !important;
+        }
 
         /* ── Cards ── */
         .card-modern {

@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-        <h3><i class="bi bi-people"></i> Students</h3>
-        <div class="subtitle">Manage student members and their records</div>
+        <h3><i class="bi bi-people-fill"></i> Students &amp; Members</h3>
+        <div class="subtitle">Manage student masterlist, membership status, and records</div>
     </div>
     <button class="btn btn-modern-primary btn-modern-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> Add Student</button>
 </div>
@@ -12,16 +12,25 @@
 <div class="card-modern animate-in">
     <div class="card-body-modern p-0">
         <div class="table-responsive">
-            <table class="table table-modern datatable" aria-label="Student members">
-                <thead><tr><th>Name</th><th>ID</th><th>Course</th><th>Year</th><th>Contact</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
+            <table class="table table-modern datatable align-middle mb-0" aria-label="Student members">
+                <thead><tr><th>Student Name</th><th>Student ID</th><th>Course</th><th>Year</th><th>Contact Info</th><th>Status</th><th style="width:90px">Actions</th></tr></thead>
                 <tbody>
                     {% for s in students %}
                     <tr class="{{ 'opacity-50' if not s.is_active }}">
-                        <td><strong>{{ s.name }}</strong></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="student-avatar-circle">
+                                    {{ s.name[:1]|upper }}
+                                </div>
+                                <div>
+                                    <strong>{{ s.name }}</strong>
+                                </div>
+                            </div>
+                        </td>
                         <td><code class="code-modern">{{ s.student_id }}</code></td>
-                        <td>{{ s.course or '—' }}</td>
-                        <td>{{ s.year or '—' }}</td>
-                        <td style="font-size:.8rem;">{% if s.email %}<i class="bi bi-envelope" style="color:var(--text-muted);"></i> {{ s.email }}<br>{% endif %}{% if s.phone %}<i class="bi bi-telephone" style="color:var(--text-muted);"></i> {{ s.phone }}{% endif %}{% if not s.email and not s.phone %}—{% endif %}</td>
+                        <td><span class="badge bg-secondary-subtle" style="font-size:0.75rem;">{{ s.course or '—' }}</span></td>
+                        <td><span class="badge bg-primary-subtle text-primary" style="font-size:0.75rem;">{{ s.year or '—' }}</span></td>
+                        <td style="font-size:.8rem;">{% if s.email %}<i class="bi bi-envelope" style="color:var(--text-muted);"></i> {{ s.email }}<br>{% endif %}{% if s.phone %}<i class="bi bi-telephone" style="color:var(--text-muted);"></i> {{ s.phone }}{% endif %}{% if not s.email and not s.phone %}<span class="text-muted">—</span>{% endif %}</td>
                         <td><span class="badge {{ 'badge-income' if s.is_active else 'badge-status-pending' }}">{{ 'Active' if s.is_active else 'Inactive' }}</span></td>
                         <td>
                             <button class="btn btn-modern-outline btn-modern-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ s._id }}" title="Edit student" aria-label="Edit student"><i class="bi bi-pencil"></i></button>
