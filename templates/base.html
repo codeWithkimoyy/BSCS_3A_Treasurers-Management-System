@@ -1214,18 +1214,17 @@
             <nav class="sidebar-nav">
                 <div class="nav-label">Main</div>
                 <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard.index') }}" title="Dashboard"><i class="bi bi-grid-1x2-fill"></i><span class="link-text">Dashboard</span></a>
-                {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}" title="Transactions"><i class="bi bi-arrow-left-right"></i><span class="link-text">Transactions</span></a>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}" title="Students"><i class="bi bi-people-fill"></i><span class="link-text">Students</span></a>
-                {% endif %}
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}" title="Transparency (Where the Money Went)"><i class="bi bi-pie-chart-fill"></i><span class="link-text">Transparency</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}" title="Reports"><i class="bi bi-bar-chart-line-fill"></i><span class="link-text">Reports</span></a>
 
                 <div class="nav-label">Management</div>
                 <a class="nav-link {% if request.endpoint and request.endpoint.startswith('payments') %}active{% endif %}" href="{{ url_for('payments.index') }}" title="{{ 'Payments' if can_manage_data() else 'Payment Status' }}"><i class="bi bi-credit-card-2-front-fill"></i><span class="link-text">{{ 'Payments' if can_manage_data() else 'Payment Status' }}</span></a>
                 {% if can_manage_data() %}
                 <a class="nav-link {% if request.endpoint and request.endpoint.startswith('events') %}active{% endif %}" href="{{ url_for('events.index') }}" title="Events"><i class="bi bi-calendar2-check-fill"></i><span class="link-text">Events</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}" title="Transactions"><i class="bi bi-arrow-left-right"></i><span class="link-text">Transactions</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}" title="Students"><i class="bi bi-people-fill"></i><span class="link-text">Students</span></a>
                 {% endif %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}" title="Reports"><i class="bi bi-bar-chart-line-fill"></i><span class="link-text">Reports</span></a>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}" title="Transparency (Where the Money Went)"><i class="bi bi-pie-chart-fill"></i><span class="link-text">Transparency</span></a>
+
                 {% if current_user.role == 'admin' %}
                 <div class="nav-label">System</div>
                 <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin.users') }}" title="Users"><i class="bi bi-shield-lock-fill"></i><span class="link-text">Users</span></a>
