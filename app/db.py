@@ -39,7 +39,9 @@ def init_db_connection(app):
     try:
         client = MongoClient(
             mongo_uri,
-            serverSelectionTimeoutMS=4000,
+            serverSelectionTimeoutMS=15000,
+            connectTimeoutMS=15000,
+            socketTimeoutMS=15000,
             tls=True,
             tlsAllowInvalidCertificates=False,
         )
@@ -49,6 +51,9 @@ def init_db_connection(app):
     except Exception as err:
         import sys
         sys.stderr.write(f"\n[!] Notice: MongoDB Atlas authentication/connection failed ({type(err).__name__}).\n")
+        if 'ServerSelectionTimeoutError' in type(err).__name__:
+            sys.stderr.write("[!] Cause: MongoDB Atlas IP Whitelist (Network Access) is blocking your current IP/VPN.\n")
+            sys.stderr.write("[!] Fix: Go to cloud.mongodb.com -> Network Access -> Add '0.0.0.0/0' (Allow from Anywhere).\n")
         sys.stderr.write("[*] Activating safe local offline mode (mongomock) so your app runs without crashing.\n\n")
         import mongomock
         client = mongomock.MongoClient()
