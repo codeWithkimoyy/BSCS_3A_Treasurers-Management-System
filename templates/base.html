@@ -120,25 +120,86 @@
             color: rgba(255,255,255,.8);
         }
 
+        /* ── Gmail-Style Google Account Profile Card ── */
         .sidebar-footer {
             padding: .75rem;
             border-top: 1px solid rgba(255,255,255,.08);
+            position: relative;
         }
-        .sidebar-footer .user-info { display: flex; align-items: center; gap: .65rem; padding: .5rem .65rem; border-radius: var(--radius-sm); }
-        .sidebar-footer .user-info .avatar {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
-            border-radius: 10px;
+        .google-profile-capsule {
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 50px;
+            padding: 5px 8px 5px 5px;
+            cursor: pointer;
+            transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+        .google-profile-capsule:hover {
+            background: rgba(255,255,255,.12);
+            border-color: rgba(255,255,255,.24);
+            box-shadow: 0 4px 16px rgba(0,0,0,.2);
+        }
+        .google-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a73e8, #4285f4);
             display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: .8rem; font-weight: 700;
+            color: #fff; font-size: .95rem; font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
         }
-        .sidebar-footer .user-info .avatar img {
-            width: 100%; height: 100%; object-fit: cover; border-radius: inherit;
+        .google-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .google-user-text { min-width: 0; flex: 1; padding: 0 .25rem; }
+        .google-name { color: #fff; font-size: .82rem; font-weight: 700; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+        .google-email { color: rgba(255,255,255,.6); font-size: .68rem; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-top: 1px; }
+        
+        .google-icon-btn {
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            color: rgba(255,255,255,.75) !important;
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all .2s ease;
+            text-decoration: none;
+            padding: 0;
+            cursor: pointer;
+            font-size: .95rem;
         }
-        .sidebar-footer .user-info .un { color: rgba(255,255,255,.8); font-size: .8rem; font-weight: 600; }
-        .sidebar-footer .user-info .role { color: rgba(255,255,255,.4); font-size: .65rem; }
-        .sidebar-footer .logout-link { color: rgba(255,255,255,.4); padding: .5rem; border-radius: 8px; transition: all .2s; }
-        .sidebar-footer .logout-link:hover { color: #fca5a5; background: rgba(239,68,68,.15); }
+        .google-icon-btn:hover {
+            background: rgba(255,255,255,.18) !important;
+            color: #fff !important;
+            transform: scale(1.05);
+        }
+        .google-icon-btn.logout:hover {
+            background: rgba(239,68,68,.25) !important;
+            color: #fca5a5 !important;
+        }
+
+        .google-big-avatar {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a73e8, #8ab4f8);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 2.2rem; font-weight: 700;
+            box-shadow: 0 4px 20px rgba(0,0,0,.18);
+            border: 3px solid rgba(255,255,255,.3);
+            overflow: hidden;
+        }
+        .google-big-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .google-profile-menu {
+            border-radius: 24px !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 20px 60px rgba(0,0,0,.35) !important;
+            background: var(--surface) !important;
+            color: var(--text-main) !important;
+            overflow: hidden;
+        }
 
         /* ── Main ── */
         .main-content { flex: 1; padding: 1.5rem 2rem 5rem; max-width: 100%; overflow-x: hidden; }
@@ -584,14 +645,64 @@
                 {% endif %}
             </nav>
             <div class="sidebar-footer">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="user-info">
-                        <div class="avatar">{% if current_user.picture %}<img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">{% else %}{{ (current_user.display_name or current_user.username)[0]|upper }}{% endif %}</div>
-                        <div><div class="un">{{ current_user.display_name or current_user.username }}</div><div class="role">{{ current_user.role|title }}</div></div>
+                <div class="dropup w-100">
+                    <div class="google-profile-capsule d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" aria-expanded="false" role="button" title="Account: {{ current_user.display_name or current_user.username }}">
+                        <div class="d-flex align-items-center gap-2 text-truncate me-1" style="min-width:0;">
+                            <div class="google-avatar">
+                                {% if current_user.picture %}
+                                <img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">
+                                {% else %}
+                                <span>{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="google-user-text">
+                                <div class="google-name">{{ current_user.display_name or current_user.username }}</div>
+                                <div class="google-email">{{ current_user.email or current_user.username }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <button type="button" class="google-icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="event.stopPropagation();">
+                                <i class="bi bi-moon-stars"></i>
+                            </button>
+                            <a href="{{ url_for('auth.logout') }}" class="google-icon-btn logout" title="Sign out" onclick="event.stopPropagation();">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </a>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <button type="button" class="logout-link" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode"><i class="bi bi-moon-stars"></i></button>
-                        <a href="{{ url_for('auth.logout') }}" class="logout-link" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+
+                    <!-- Gmail-Style Profile Dropdown Card -->
+                    <div class="dropdown-menu google-profile-menu p-0 shadow-lg" style="width: 290px; margin-bottom: 10px;">
+                        <div class="p-3 text-center">
+                            <div class="mb-2">
+                                <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill" style="font-size: 0.72rem; font-weight: 500;">
+                                    {{ current_user.email or current_user.username }}
+                                </span>
+                            </div>
+                            <div class="google-big-avatar mx-auto mb-2">
+                                {% if current_user.picture %}
+                                <img src="{{ current_user.picture }}" alt="" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">
+                                {% else %}
+                                <span>{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+                                {% endif %}
+                            </div>
+                            <h6 class="fw-bold mb-0 text-truncate" style="font-size: 1rem; color: var(--text-main);">{{ current_user.display_name or current_user.username }}</h6>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 mt-1" style="font-size: 0.7rem; text-transform: uppercase; font-weight: 600;">
+                                {{ current_user.role|title }}
+                            </span>
+                        </div>
+                        <div class="p-3 border-top" style="background: var(--surface-hover); border-color: var(--border-color) !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                                <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+                                    <i class="bi bi-circle-half me-1 text-primary"></i> Theme Mode
+                                </span>
+                                <button type="button" class="btn btn-modern-outline btn-modern-sm py-1 px-2 d-flex align-items-center gap-1" id="themeToggleDropdown">
+                                    <i class="bi bi-moon-stars"></i> <span id="themeToggleLabel">Theme</span>
+                                </button>
+                            </div>
+                            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger w-100 rounded-pill d-flex align-items-center justify-content-center gap-2 py-2 mt-2" style="font-weight: 600; font-size: 0.85rem;">
+                                <i class="bi bi-box-arrow-right"></i> Sign out
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -641,24 +752,44 @@
             });
 
             // Dark mode toggle (persisted)
-            var themeToggle = document.getElementById('themeToggle');
-            var savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                themeToggle?.querySelector('i')?.classList.replace('bi-moon-stars', 'bi-sun');
+            function updateThemeUI(isDark) {
+                var btn1 = document.getElementById('themeToggle');
+                var btn2 = document.getElementById('themeToggleDropdown');
+                var label = document.getElementById('themeToggleLabel');
+
+                if (isDark) {
+                    btn1?.querySelector('i')?.classList.replace('bi-moon-stars', 'bi-sun');
+                    btn2?.querySelector('i')?.classList.replace('bi-moon-stars', 'bi-sun');
+                    if (label) label.textContent = 'Light';
+                } else {
+                    btn1?.querySelector('i')?.classList.replace('bi-sun', 'bi-moon-stars');
+                    btn2?.querySelector('i')?.classList.replace('bi-sun', 'bi-moon-stars');
+                    if (label) label.textContent = 'Dark';
+                }
             }
-            themeToggle?.addEventListener('click', function() {
+
+            var savedTheme = localStorage.getItem('theme');
+            var isDarkInitial = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDarkInitial) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+            updateThemeUI(isDarkInitial);
+
+            function toggleThemeMode() {
                 var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
                 if (isDark) {
                     document.documentElement.removeAttribute('data-theme');
                     localStorage.setItem('theme', 'light');
-                    this.querySelector('i')?.classList.replace('bi-sun', 'bi-moon-stars');
+                    updateThemeUI(false);
                 } else {
                     document.documentElement.setAttribute('data-theme', 'dark');
                     localStorage.setItem('theme', 'dark');
-                    this.querySelector('i')?.classList.replace('bi-moon-stars', 'bi-sun');
+                    updateThemeUI(true);
                 }
-            });
+            }
+
+            document.getElementById('themeToggle')?.addEventListener('click', toggleThemeMode);
+            document.getElementById('themeToggleDropdown')?.addEventListener('click', toggleThemeMode);
             document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
             document.querySelectorAll('.avatar img[data-fallback]').forEach(function(img) {
                 img.addEventListener('error', function() {
