@@ -120,27 +120,53 @@
         }
 
         .sidebar-nav { padding: .75rem .75rem; flex: 1; overflow-y: auto; }
-        .sidebar-nav .nav-label { font-size: .65rem; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.3); padding: 1rem .75rem .35rem; font-weight: 600; }
+        .sidebar-nav .nav-label { font-size: .65rem; text-transform: uppercase; letter-spacing: 1.2px; color: rgba(255,255,255,.38); padding: 1rem .85rem .4rem; font-weight: 700; }
         .sidebar-nav .nav-link {
-            color: rgba(255,255,255,.6);
-            padding: .65rem .85rem;
-            border-radius: var(--radius-sm);
+            color: rgba(255,255,255,.72);
+            padding: .5rem .75rem;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             gap: .75rem;
             font-size: .875rem;
             font-weight: 500;
-            transition: all .2s;
+            transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
             position: relative;
         }
-        .sidebar-nav .nav-link i { width: 20px; text-align: center; font-size: 1.05rem; }
-        .sidebar-nav .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+        .sidebar-nav .nav-link i {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            background: rgba(255, 255, 255, 0.07);
+            color: rgba(255, 255, 255, 0.85);
+            transition: all .2s ease;
+            flex-shrink: 0;
+        }
+        .sidebar-nav .nav-link:hover {
+            color: #fff;
+            background: rgba(255,255,255,.09);
+        }
+        .sidebar-nav .nav-link:hover i {
+            background: rgba(255, 255, 255, 0.18);
+            color: #fff;
+            transform: scale(1.06);
+        }
         .sidebar-nav .nav-link.active {
             color: #fff;
-            background: linear-gradient(135deg, var(--primary-light), var(--secondary));
-            box-shadow: 0 4px 15px rgba(79,70,229,.35);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 4px 18px rgba(79,70,229,.4);
+            font-weight: 600;
+        }
+        .sidebar-nav .nav-link.active i {
+            background: rgba(255, 255, 255, 0.24);
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
         }
         .sidebar-nav .nav-link .badge-count {
             margin-left: auto;
@@ -1019,23 +1045,22 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-label">Main</div>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard.index') }}" title="Dashboard"><i class="bi bi-speedometer2"></i><span class="link-text">Dashboard</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard.index') }}" title="Dashboard"><i class="bi bi-grid-1x2-fill"></i><span class="link-text">Dashboard</span></a>
                 {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}" title="Transactions"><i class="bi bi-cash-stack"></i><span class="link-text">Transactions</span></a>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}" title="Students"><i class="bi bi-people"></i><span class="link-text">Students</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}" title="Transactions"><i class="bi bi-arrow-left-right"></i><span class="link-text">Transactions</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}" title="Students"><i class="bi bi-people-fill"></i><span class="link-text">Students</span></a>
                 {% endif %}
 
                 <div class="nav-label">Management</div>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('payments') %}active{% endif %}" href="{{ url_for('payments.index') }}" title="{{ 'Payments' if can_manage_data() else 'Payment Status' }}"><i class="bi bi-credit-card"></i><span class="link-text">{{ 'Payments' if can_manage_data() else 'Payment Status' }}</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('payments') %}active{% endif %}" href="{{ url_for('payments.index') }}" title="{{ 'Payments' if can_manage_data() else 'Payment Status' }}"><i class="bi bi-credit-card-2-front-fill"></i><span class="link-text">{{ 'Payments' if can_manage_data() else 'Payment Status' }}</span></a>
                 {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('events') %}active{% endif %}" href="{{ url_for('events.index') }}" title="Events"><i class="bi bi-calendar-event"></i><span class="link-text">Events</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('events') %}active{% endif %}" href="{{ url_for('events.index') }}" title="Events"><i class="bi bi-calendar2-check-fill"></i><span class="link-text">Events</span></a>
                 {% endif %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}" title="Reports"><i class="bi bi-file-earmark-bar-graph"></i><span class="link-text">Reports</span></a>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}" title="Transparency (Where the Money Went)"><i class="bi bi-eye"></i><span class="link-text">Transparency</span></a>
-                {% if can_manage_data() %}<a class="nav-link {% if request.endpoint == 'reports.export' %}active{% endif %}" href="{{ url_for('reports.export') }}" title="Export CSV"><i class="bi bi-download"></i><span class="link-text">Export CSV</span></a>{% endif %}
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}" title="Reports"><i class="bi bi-bar-chart-line-fill"></i><span class="link-text">Reports</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}" title="Transparency (Where the Money Went)"><i class="bi bi-pie-chart-fill"></i><span class="link-text">Transparency</span></a>
                 {% if current_user.role == 'admin' %}
                 <div class="nav-label">System</div>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin.users') }}" title="Users"><i class="bi bi-shield-lock"></i><span class="link-text">Users</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin.users') }}" title="Users"><i class="bi bi-shield-lock-fill"></i><span class="link-text">Users</span></a>
                 {% endif %}
             </nav>
             <div class="sidebar-footer">
@@ -1124,15 +1149,15 @@
 
     {% if current_user.is_authenticated %}
     <nav class="mobile-bottom-nav">
-        <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('dashboard') }}"><i class="bi bi-speedometer2"></i>Home</a>
+        <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('dashboard') }}"><i class="bi bi-grid-1x2-fill"></i>Home</a>
         {% if can_manage_data() %}
-        <a href="{{ url_for('payments.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('payments') }}"><i class="bi bi-credit-card"></i>Collect</a>
-        <a href="{{ url_for('events.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('events') }}"><i class="bi bi-calendar-event"></i>Events</a>
-        <a href="{{ url_for('students.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('students') }}"><i class="bi bi-people"></i>Members</a>
+        <a href="{{ url_for('payments.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('payments') }}"><i class="bi bi-credit-card-2-front-fill"></i>Collect</a>
+        <a href="{{ url_for('events.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('events') }}"><i class="bi bi-calendar2-check-fill"></i>Events</a>
+        <a href="{{ url_for('students.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('students') }}"><i class="bi bi-people-fill"></i>Members</a>
         {% else %}
-        <a href="{{ url_for('payments.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('payments') }}"><i class="bi bi-credit-card"></i>Status</a>
+        <a href="{{ url_for('payments.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('payments') }}"><i class="bi bi-credit-card-2-front-fill"></i>Status</a>
         {% endif %}
-        <a href="{{ url_for('reports.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('reports') }}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
+        <a href="{{ url_for('reports.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('reports') }}"><i class="bi bi-bar-chart-line-fill"></i>Reports</a>
     </nav>
     {% endif %}
 
