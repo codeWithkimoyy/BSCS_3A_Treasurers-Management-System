@@ -114,18 +114,20 @@
             </tfoot>
         </table>
 
-        <!-- Sign-off Block -->
+        <!-- Sign-off Block (Using Assigned System Positions) -->
         <div class="row mt-5 pt-4">
             <div class="col-6 text-center">
-                <div style="width: 75%; margin: 0 auto; border-top: 1.5px solid #0f172a; padding-top: 4px;">
-                    <strong style="font-size: 9.5pt;">KIM C. CUTAMORA</strong><br>
-                    <span class="text-muted" style="font-size: 8pt;">Class Treasurer</span>
+                <div style="width: 75%; margin: 0 auto; border-top: 1.5px solid #0f172a; padding-top: 5px;">
+                    <strong style="font-size: 9.5pt; letter-spacing: 0.3px;">{{ officers.treasurer.name }}</strong><br>
+                    <span class="text-muted" style="font-size: 8.5pt;">{{ officers.treasurer.title }}</span><br>
+                    <small class="text-muted" style="font-size: 7.5pt; font-style: italic;">Prepared by</small>
                 </div>
             </div>
             <div class="col-6 text-center">
-                <div style="width: 75%; margin: 0 auto; border-top: 1.5px solid #0f172a; padding-top: 4px;">
-                    <strong style="font-size: 9.5pt;">CLASS AUDITOR / MAYOR</strong><br>
-                    <span class="text-muted" style="font-size: 8pt;">Verified &amp; Attested Correct</span>
+                <div style="width: 75%; margin: 0 auto; border-top: 1.5px solid #0f172a; padding-top: 5px;">
+                    <strong style="font-size: 9.5pt; letter-spacing: 0.3px;">{{ officers.mayor.name }}</strong><br>
+                    <span class="text-muted" style="font-size: 8.5pt;">{{ officers.mayor.title }}</span><br>
+                    <small class="text-muted" style="font-size: 7.5pt; font-style: italic;">Verified &amp; Attested Correct</small>
                 </div>
             </div>
         </div>

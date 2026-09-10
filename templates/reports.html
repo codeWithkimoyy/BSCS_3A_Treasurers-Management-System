@@ -298,21 +298,23 @@
     </div>
 </div>
 
-<!-- Formal Certification Footer for Print / Audit -->
+<!-- Formal Certification Footer for Print / Audit (Dynamic System Officers) -->
 <div class="card-modern p-4 mt-4 print-only" style="border: 1px dashed #94a3b8;">
     <div class="row pt-3">
         <div class="col-6 text-center">
-            <div style="height: 50px;"></div>
+            <div style="height: 40px;"></div>
             <div style="border-top: 1px solid #334155; display: inline-block; width: 80%; padding-top: 5px;">
-                <strong style="color:#0f172a;">KIM C. CUTAMORA</strong><br>
-                <span class="text-muted" style="font-size:0.85rem;">Class Treasurer</span>
+                <strong style="color:#0f172a; font-size: 10pt; letter-spacing: 0.3px;">{{ officers.treasurer.name }}</strong><br>
+                <span class="text-muted" style="font-size:0.85rem;">{{ officers.treasurer.title }}</span><br>
+                <small class="text-muted" style="font-size: 0.75rem; font-style: italic;">Prepared by</small>
             </div>
         </div>
         <div class="col-6 text-center">
-            <div style="height: 50px;"></div>
+            <div style="height: 40px;"></div>
             <div style="border-top: 1px solid #334155; display: inline-block; width: 80%; padding-top: 5px;">
-                <strong style="color:#0f172a;">CLASS MAYOR / AUDITOR</strong><br>
-                <span class="text-muted" style="font-size:0.85rem;">Verified &amp; Attested Correct</span>
+                <strong style="color:#0f172a; font-size: 10pt; letter-spacing: 0.3px;">{{ officers.mayor.name }}</strong><br>
+                <span class="text-muted" style="font-size:0.85rem;">{{ officers.mayor.title }}</span><br>
+                <small class="text-muted" style="font-size: 0.75rem; font-style: italic;">Verified &amp; Attested Correct</small>
             </div>
         </div>
     </div>

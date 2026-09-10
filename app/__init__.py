@@ -100,6 +100,7 @@ def _register_context_processors(app):
     @app.context_processor
     def inject_globals():
         g.csp_nonce = os.urandom(16).hex()
+        from .db import get_class_officers
         return {
             'csp_nonce': g.csp_nonce,
             'now': __import__('datetime').datetime.now(),
@@ -109,6 +110,7 @@ def _register_context_processors(app):
             'google_cid': app.config['GOOGLE_CLIENT_ID'],
             'has_logo': _logo_exists(app),
             'csrf_token': generate_csrf_token(),
+            'officers': get_class_officers(),
         }
 
     @app.context_processor

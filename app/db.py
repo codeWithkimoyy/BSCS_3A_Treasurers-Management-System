@@ -190,3 +190,36 @@ def get_confirmed_payment_rows(start=None, end=None):
             'payment_method': {'$literal': 'event payment'}
         }}
     ]))
+
+
+def get_class_officers():
+    """Dynamically return the assigned officers based on system user roles."""
+    if not db:
+        return {
+            'treasurer': {'name': 'CLASS TREASURER', 'title': 'Class Treasurer'},
+            'mayor': {'name': 'CLASS MAYOR', 'title': 'Class Mayor'},
+            'auditor': {'name': 'CLASS AUDITOR', 'title': 'Class Auditor'}
+        }
+
+    treasurer_user = db.users.find_one({'role': 'treasurer'})
+    mayor_user = db.users.find_one({'role': 'mayor'})
+    admin_user = db.users.find_one({'role': 'admin', 'display_name': {'$exists': True, '$ne': None}}) or db.users.find_one({'role': 'admin'})
+
+    t_name = (treasurer_user.get('display_name') or treasurer_user.get('username') or 'Class Treasurer') if treasurer_user else 'Class Treasurer'
+    m_name = (mayor_user.get('display_name') or mayor_user.get('username') or 'Class Mayor') if mayor_user else 'Class Mayor'
+    a_name = (admin_user.get('display_name') or admin_user.get('username') or 'Class Auditor') if admin_user else 'Class Auditor'
+
+    return {
+        'treasurer': {
+            'name': t_name.upper(),
+            'title': 'Class Treasurer'
+        },
+        'mayor': {
+            'name': m_name.upper(),
+            'title': 'Class Mayor'
+        },
+        'auditor': {
+            'name': a_name.upper(),
+            'title': 'Class Auditor / Administrator'
+        }
+    }
