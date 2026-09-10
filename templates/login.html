@@ -346,42 +346,54 @@
 document.addEventListener('DOMContentLoaded', function() {
     const dragon = document.getElementById('dragonModel');
 
-    function initDragonAnimation() {
+    function playDragonMove(animName) {
         if (!dragon) return;
         try {
             const anims = dragon.availableAnimations || [];
-            let targetAnim = 'fly';
-            if (anims.length > 0 && !anims.includes('fly')) {
-                targetAnim = anims[0];
+            let targetAnim = animName || 'fly';
+            if (anims.length > 0 && !anims.includes(targetAnim)) {
+                targetAnim = anims.find(a => a.toLowerCase() === (animName || 'fly').toLowerCase()) || anims[0];
             }
-            dragon.animationName = targetAnim;
+            if (dragon.animationName !== targetAnim) {
+                dragon.animationName = targetAnim;
+                dragon.currentTime = 0;
+            }
             dragon.play();
         } catch(e) {
-            console.error('Dragon play error:', e);
+            console.error('Dragon animation error:', e);
         }
     }
 
     if (dragon) {
-        dragon.addEventListener('load', initDragonAnimation);
-        dragon.addEventListener('model-visibility', function(e) {
-            if (e.detail.visible) initDragonAnimation();
-        });
+        dragon.addEventListener('load', function() {
+            console.log('Dragon 3D model loaded! Animations:', dragon.availableAnimations);
+            playDragonMove('fly');
+        }, { once: true });
+
         if (dragon.loaded) {
-            initDragonAnimation();
+            playDragonMove('fly');
         }
     }
 
+    // User gesture fallback to bypass browser background autoplay locks
+    const kickstartAutoplay = function() {
+        if (dragon && dragon.paused) {
+            dragon.play();
+        }
+        window.removeEventListener('pointerdown', kickstartAutoplay);
+        window.removeEventListener('keydown', kickstartAutoplay);
+    };
+    window.addEventListener('pointerdown', kickstartAutoplay, { passive: true });
+    window.addEventListener('keydown', kickstartAutoplay, { passive: true });
+
+    // Interactive move buttons (Fly, Roar, Attack, Idle)
     document.querySelectorAll('.btn-dragon-act').forEach(function(btn) {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             document.querySelectorAll('.btn-dragon-act').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             const anim = this.dataset.anim;
-            if (dragon) {
-                dragon.pause();
-                dragon.animationName = anim;
-                dragon.currentTime = 0;
-                dragon.play();
-            }
+            playDragonMove(anim);
         });
     });
 });
