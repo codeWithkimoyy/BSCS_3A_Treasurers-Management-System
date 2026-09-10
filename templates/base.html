@@ -58,7 +58,7 @@
 
         .app-wrapper { display: flex; min-height: 100vh; }
 
-        /* ── Sidebar ── */
+        /* ── Sidebar & Collapsible Layout ── */
         .sidebar {
             background: var(--sidebar-bg);
             width: 260px;
@@ -68,9 +68,10 @@
             position: sticky;
             top: 0;
             height: 100vh;
-            transition: transform .3s ease;
+            transition: width .25s cubic-bezier(0.4, 0, 0.2, 1), transform .25s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1040;
             flex-shrink: 0;
+            overflow-x: hidden;
         }
         .sidebar-brand {
             padding: 1.5rem 1.25rem 1rem;
@@ -199,6 +200,91 @@
             background: var(--surface) !important;
             color: var(--text-main) !important;
             overflow: hidden;
+        }
+
+        /* ── Hamburger Buttons & Collapsed Sidebar States ── */
+        .google-hamburger-btn {
+            width: 38px; height: 38px;
+            border-radius: 50% !important;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-main) !important;
+            transition: all .2s ease;
+            padding: 0;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .google-hamburger-btn:hover {
+            background: var(--surface-hover) !important;
+            color: var(--primary) !important;
+        }
+        .sidebar .google-hamburger-btn {
+            color: rgba(255, 255, 255, 0.75) !important;
+        }
+        .sidebar .google-hamburger-btn:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+            color: #fff !important;
+        }
+        .btn-icon-round {
+            width: 36px; height: 36px;
+            border-radius: 50% !important;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0;
+            transition: all .2s ease;
+            cursor: pointer;
+        }
+        .btn-icon-round:hover {
+            background: var(--surface-hover);
+            color: var(--primary);
+            border-color: var(--primary-light);
+        }
+
+        @media (min-width: 768px) {
+            .app-wrapper.sidebar-collapsed .sidebar {
+                width: 74px !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-brand {
+                padding: 1.25rem 0.5rem 1rem !important;
+                justify-content: center !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-brand .brand-text,
+            .app-wrapper.sidebar-collapsed .sidebar-brand .logo-icon,
+            .app-wrapper.sidebar-collapsed .sidebar-nav .nav-label,
+            .app-wrapper.sidebar-collapsed .sidebar-nav .nav-link .link-text,
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-user-text,
+            .app-wrapper.sidebar-collapsed .sidebar-footer .bi-chevron-up {
+                display: none !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-brand .google-hamburger-btn {
+                margin: 0 !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-nav {
+                padding: 0.75rem 0.4rem !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-nav .nav-link {
+                justify-content: center !important;
+                padding: 0.75rem 0 !important;
+                border-radius: 12px;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-nav .nav-link i {
+                font-size: 1.25rem !important;
+                margin: 0 !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer {
+                padding: 0.75rem 0.4rem !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-capsule {
+                border-radius: 50% !important;
+                width: 42px !important;
+                height: 42px !important;
+                padding: 0 !important;
+                justify-content: center !important;
+                margin: 0 auto !important;
+            }
         }
 
         /* ── Main ── */
@@ -883,31 +969,34 @@
         {% if current_user.is_authenticated %}
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center">
-                    <div class="logo-icon">{% if has_logo|default(false) %}<img src="{{ url_for('admin.app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
-                    <div><h5>Student Treasurer</h5><small>Financial Management System</small></div>
+                <div class="d-flex align-items-center text-truncate">
+                    <button type="button" class="google-hamburger-btn sidebar-toggle-btn me-2 flex-shrink-0" title="Collapse menu" aria-label="Collapse menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="logo-icon flex-shrink-0">{% if has_logo|default(false) %}<img src="{{ url_for('admin.app_logo', v='bscs3a-20260802') }}" alt="BSCS 3A Treasurer's Management System logo">{% else %}₱{% endif %}</div>
+                    <div class="brand-text text-truncate"><h5>Student Treasurer</h5><small>Financial Management System</small></div>
                 </div>
                 <button class="d-md-none btn p-1 sidebar-toggle-btn" style="color:rgba(255,255,255,.5);font-size:1.3rem;border:none;background:none;line-height:1;"><i class="bi bi-x-lg"></i></button>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-label">Main</div>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('dashboard') %}active{% endif %}" href="{{ url_for('dashboard.index') }}" title="Dashboard"><i class="bi bi-speedometer2"></i><span class="link-text">Dashboard</span></a>
                 {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}"><i class="bi bi-cash-stack"></i>Transactions</a>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}"><i class="bi bi-people"></i>Students</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transactions') %}active{% endif %}" href="{{ url_for('transactions.index') }}" title="Transactions"><i class="bi bi-cash-stack"></i><span class="link-text">Transactions</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('students') %}active{% endif %}" href="{{ url_for('students.index') }}" title="Students"><i class="bi bi-people"></i><span class="link-text">Students</span></a>
                 {% endif %}
 
                 <div class="nav-label">Management</div>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('payments') %}active{% endif %}" href="{{ url_for('payments.index') }}"><i class="bi bi-credit-card"></i>{{ 'Payments' if can_manage_data() else 'Payment Status' }}</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('payments') %}active{% endif %}" href="{{ url_for('payments.index') }}" title="{{ 'Payments' if can_manage_data() else 'Payment Status' }}"><i class="bi bi-credit-card"></i><span class="link-text">{{ 'Payments' if can_manage_data() else 'Payment Status' }}</span></a>
                 {% if can_manage_data() %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('events') %}active{% endif %}" href="{{ url_for('events.index') }}"><i class="bi bi-calendar-event"></i>Events</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('events') %}active{% endif %}" href="{{ url_for('events.index') }}" title="Events"><i class="bi bi-calendar-event"></i><span class="link-text">Events</span></a>
                 {% endif %}
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-bar-graph"></i>Reports</a>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}"><i class="bi bi-eye"></i>Transparency</a>
-                {% if can_manage_data() %}<a class="nav-link {% if request.endpoint == 'reports.export' %}active{% endif %}" href="{{ url_for('reports.export') }}"><i class="bi bi-download"></i>Export CSV</a>{% endif %}
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') != 'transparency' %}active{% endif %}" href="{{ url_for('reports.index') }}" title="Reports"><i class="bi bi-file-earmark-bar-graph"></i><span class="link-text">Reports</span></a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') and request.args.get('type') == 'transparency' %}active{% endif %}" href="{{ url_for('reports.index', type='transparency') }}" title="Transparency (Where the Money Went)"><i class="bi bi-eye"></i><span class="link-text">Transparency</span></a>
+                {% if can_manage_data() %}<a class="nav-link {% if request.endpoint == 'reports.export' %}active{% endif %}" href="{{ url_for('reports.export') }}" title="Export CSV"><i class="bi bi-download"></i><span class="link-text">Export CSV</span></a>{% endif %}
                 {% if current_user.role == 'admin' %}
                 <div class="nav-label">System</div>
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin.users') }}"><i class="bi bi-shield-lock"></i>Users</a>
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}" href="{{ url_for('admin.users') }}" title="Users"><i class="bi bi-shield-lock"></i><span class="link-text">Users</span></a>
                 {% endif %}
             </nav>
             <div class="sidebar-footer">
@@ -971,10 +1060,22 @@
         {% endif %}
 
         <main class="main-content" id="mainContent">
-            <div class="d-md-none mb-2 d-flex gap-2">
-                <button class="btn btn-modern-outline btn-modern-sm sidebar-toggle-btn" style="flex:1;text-align:left;padding:.5rem .85rem;"><i class="bi bi-list"></i> Menu</button>
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-modern-outline btn-modern-sm" style="padding:.5rem .85rem;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+            {% if current_user.is_authenticated %}
+            <div class="top-nav-bar d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn google-hamburger-btn sidebar-toggle-btn me-2" id="topHamburgerBtn" title="Toggle navigation menu" aria-label="Toggle navigation menu">
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+                    <span class="d-md-none fw-bold" style="font-size:1.05rem;color:var(--text-main);">Student Treasurer</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-icon-round" id="quickThemeBtn" title="Toggle theme mode" aria-label="Toggle theme mode">
+                        <i class="bi bi-moon-stars"></i>
+                    </button>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-icon-round text-danger d-md-none" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+                </div>
             </div>
+            {% endif %}
             {% block content %}{% endblock %}
             <footer class="text-center mt-4" style="color:#94a3b8;font-size:.75rem;">
                 &copy; {{ current_year }} Student Treasurer System &mdash; Built with precision
@@ -1051,6 +1152,13 @@
 
             document.getElementById('themeToggle')?.addEventListener('click', toggleThemeMode);
             document.getElementById('themeToggleDropdown')?.addEventListener('click', toggleThemeMode);
+            document.getElementById('quickThemeBtn')?.addEventListener('click', toggleThemeMode);
+
+            // Restore desktop collapsed sidebar state
+            if (window.innerWidth >= 768 && localStorage.getItem('sidebar-collapsed') === 'true') {
+                document.querySelector('.app-wrapper')?.classList.add('sidebar-collapsed');
+            }
+
             document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
             document.querySelectorAll('.avatar img[data-fallback]').forEach(function(img) {
                 img.addEventListener('error', function() {
@@ -1098,8 +1206,14 @@
             if (btn) btn.parentElement.remove();
         });
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('show');
-            document.getElementById('sidebarOverlay').classList.toggle('show');
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar')?.classList.toggle('show');
+                document.getElementById('sidebarOverlay')?.classList.toggle('show');
+            } else {
+                var wrapper = document.querySelector('.app-wrapper');
+                wrapper?.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebar-collapsed', wrapper?.classList.contains('sidebar-collapsed'));
+            }
         }
         function showToast(msg, type) {
             var c = document.getElementById('toastContainer');

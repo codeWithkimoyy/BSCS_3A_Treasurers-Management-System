@@ -8,7 +8,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
         <a href="{{ url_for('reports.index', type='summary') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='summary' else 'btn-modern-outline' }}">Summary</a>
-        <a href="{{ url_for('reports.index', type='transparency') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='transparency' else 'btn-modern-outline' }}"><i class="bi bi-eye"></i> Where the Money Went</a>
+        <a href="{{ url_for('reports.index', type='transparency') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='transparency' else 'btn-modern-outline' }}"><i class="bi bi-eye"></i> Transparency (Where the Money Went)</a>
         <a href="{{ url_for('reports.index', type='student') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='student' else 'btn-modern-outline' }}">Per Student</a>
         <a href="{{ url_for('reports.index', type='date_range') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if report_type=='date_range' else 'btn-modern-outline' }}">Date Range</a>
         <div class="dropdown">
