@@ -259,20 +259,21 @@
                 <model-viewer
                     id="dragonModel"
                     src="{{ url_for('static', filename='red_dragon.glb') }}"
-                    alt="3D Red Dragon Guardian"
+                    alt="3D Animated Red Dragon"
+                    autoplay
+                    animation-name="fly"
                     auto-rotate
-                    auto-rotate-delay="300"
-                    rotation-per-second="20deg"
+                    auto-rotate-delay="0"
+                    rotation-per-second="18deg"
                     camera-controls
-                    camera-orbit="0deg 75deg auto"
+                    environment-image="neutral"
+                    shadow-intensity="1.5"
+                    shadow-softness="0.5"
+                    exposure="1.0"
+                    camera-orbit="45deg 75deg 105%"
                     bounds="tight"
                     field-of-view="32deg"
                     touch-action="pan-y"
-                    shadow-intensity="1.2"
-                    shadow-softness="0.8"
-                    exposure="0.95"
-                    autoplay
-                    animation-name="fly"
                     style="width: 100%; height: 100%; background: transparent; outline: none;">
                 </model-viewer>
                 <div class="dragon-interact-hint">
@@ -343,6 +344,13 @@
 <script nonce="{{ csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
     const dragon = document.getElementById('dragonModel');
+    if (dragon) {
+        dragon.addEventListener('load', function() {
+            dragon.animationName = 'fly';
+            dragon.play({ repetitions: Infinity });
+        });
+    }
+
     document.querySelectorAll('.btn-dragon-act').forEach(function(btn) {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.btn-dragon-act').forEach(b => b.classList.remove('active'));
@@ -350,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const anim = this.dataset.anim;
             if (dragon) {
                 dragon.animationName = anim;
-                dragon.play();
+                dragon.play({ repetitions: Infinity });
             }
         });
     });
