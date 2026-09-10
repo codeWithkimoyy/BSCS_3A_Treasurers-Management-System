@@ -14,6 +14,18 @@
     </div>
 </div>
 
+<div class="d-flex gap-2 mb-4 flex-wrap align-items-center animate-in">
+    <a href="{{ url_for('events.index', status='active') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if filter_status == 'active' else 'btn-modern-outline' }}">
+        <i class="bi bi-calendar2-check-fill me-1"></i> Active Collections ({{ active_count }})
+    </a>
+    <a href="{{ url_for('events.index', status='closed') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if filter_status == 'closed' else 'btn-modern-outline' }}">
+        <i class="bi bi-archive-fill me-1"></i> Closed Events ({{ closed_count }})
+    </a>
+    <a href="{{ url_for('events.index', status='all') }}" class="btn btn-modern-sm {{ 'btn-modern-primary' if filter_status == 'all' else 'btn-modern-outline' }}">
+        All Events ({{ all_count }})
+    </a>
+</div>
+
 <div class="row g-3">
     {% for e in events %}
     <div class="col-md-6 col-lg-4 animate-in">
@@ -74,7 +86,11 @@
                     {% if e.fully_paid and not e.allocation %}
                     <span class="badge" style="background:rgba(14,165,233,.15);color:#38bdf8;border:1px solid rgba(14,165,233,.3);font-size:.7rem;"><i class="bi bi-check-all"></i> Fully Paid</span>
                     {% endif %}
+                    {% if e.status == 'active' %}
                     <a href="{{ url_for('payments.index', event_id=e._id) }}" class="btn btn-modern-primary btn-modern-sm flex-fill"><i class="bi bi-credit-card"></i> Collect</a>
+                    {% else %}
+                    <a href="{{ url_for('payments.index', event_id=e._id) }}" class="btn btn-modern-outline btn-modern-sm flex-fill"><i class="bi bi-eye"></i> View Payments</a>
+                    {% endif %}
                     <div class="dropdown d-inline">
                         <button class="btn btn-modern-outline btn-modern-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Export Event Payments">
                             <i class="bi bi-download"></i> Export
@@ -88,6 +104,8 @@
                     </div>
                     {% if e.status == 'active' %}
                     <form method="POST" action="{{ url_for('events.close', id=e._id) }}" class="d-inline confirm-close"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm" title="Close event" aria-label="Close event"><i class="bi bi-x-circle"></i></button></form>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('events.reopen', id=e._id) }}" class="d-inline"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-outline btn-modern-sm text-success" title="Reopen event for collections" aria-label="Reopen event"><i class="bi bi-arrow-counterclockwise"></i></button></form>
                     {% endif %}
                     <form method="POST" action="{{ url_for('events.delete', id=e._id) }}" class="d-inline confirm-delete" data-name="{{ e.title }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button type="submit" class="btn btn-modern-danger btn-modern-sm" title="Delete event" aria-label="Delete event"><i class="bi bi-trash"></i></button></form>
                 </div>

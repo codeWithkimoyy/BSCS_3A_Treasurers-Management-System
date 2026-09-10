@@ -20,20 +20,35 @@ ROLES_MANAGE = ('admin', 'mayor', 'treasurer')
 @bp.route('/events')
 @login_required
 def index():
-    evts = list(db.events.find().sort('created_at', -1))
+    filter_status = request.args.get('status', 'active')
+
+    query = {}
+    if filter_status == 'active':
+        query['status'] = 'active'
+    elif filter_status == 'closed':
+        query['status'] = 'closed'
+
+    evts = list(db.events.find(query).sort('created_at', -1))
     total_students = db.students.count_documents({'is_active': 1})
+    active_count = db.events.count_documents({'status': 'active'})
+    closed_count = db.events.count_documents({'status': 'closed'})
+    all_count = db.events.count_documents({})
+
     for e in evts:
+        e['amount'] = float(e.get('amount', 0) or 0)
         total_paid = list(db.payments.aggregate([
             {'$match': {'event_id': e['_id'], 'confirmed': True}},
             {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}}}
         ]))
         paid_count = db.payments.count_documents({'event_id': e['_id'], 'confirmed': True})
         locked_count = db.payments.count_documents({'event_id': e['_id'], 'locked': True})
-        e['collected'] = total_paid[0]['total'] if total_paid else 0
+        e['collected'] = float(total_paid[0]['total'] if total_paid else 0)
         e['paid_count'] = paid_count
         e['total_students'] = total_students
         e['fully_paid'] = locked_count == total_students if total_students > 0 else False
-    return render_template('events.html', events=evts)
+
+    return render_template('events.html', events=evts, filter_status=filter_status,
+        active_count=active_count, closed_count=closed_count, all_count=all_count)
 
 
 @bp.route('/events/add', methods=['POST'])
@@ -80,6 +95,17 @@ def close(id):
     db.events.update_one({'_id': id}, {'$set': {'status': 'closed'}})
     log_audit('event_close', target=id)
     flash('Event closed', 'success')
+    return redirect(url_for('events.index'))
+
+
+@bp.route('/events/reopen/<int:id>', methods=['POST'])
+@login_required
+@role_required(*ROLES_MANAGE)
+def reopen(id):
+    validate_csrf()
+    db.events.update_one({'_id': id}, {'$set': {'status': 'active'}})
+    log_audit('event_reopen', target=id)
+    flash('Event reopened for active collections', 'success')
     return redirect(url_for('events.index'))
 
 
