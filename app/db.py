@@ -36,9 +36,23 @@ db = _DB()
 
 
 def init_db_connection(app):
-    mongo_uri = app.config.get('MONGO_URI')
-    import certifi
+    raw_uri = app.config.get('MONGO_URI') or ''
+    mongo_uri = raw_uri.strip().strip('"').strip("'").strip()
+    if mongo_uri.startswith('MONGO_URI='):
+        mongo_uri = mongo_uri[10:].strip().strip('"').strip("'").strip()
+    elif mongo_uri.startswith('URI='):
+        mongo_uri = mongo_uri[4:].strip().strip('"').strip("'").strip()
 
+    if not mongo_uri.startswith('mongodb://') and not mongo_uri.startswith('mongodb+srv://'):
+        db._last_error = f"InvalidURI: Value in MONGO_URI starts with '{mongo_uri[:20]}' instead of 'mongodb+srv://'. Please paste the MongoDB Atlas connection string."
+        import sys
+        sys.stderr.write(f"\n[!] Notice: {db._last_error}\n")
+        import mongomock
+        mock_client = mongomock.MongoClient()
+        db._database = mock_client.get_database('student_treasury')
+        return db
+
+    import certifi
     client = None
     try:
         # 1. Primary connection attempt with certifi root CAs
