@@ -196,3 +196,16 @@ def _register_security_headers(app):
         )
         resp.headers['Content-Security-Policy'] = csp
         return resp
+
+
+_app_instance = None
+
+
+def __getattr__(name):
+    """Enable WSGI entry points like 'gunicorn app:app' to load cleanly."""
+    if name == 'app':
+        global _app_instance
+        if _app_instance is None:
+            _app_instance = create_app()
+        return _app_instance
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
