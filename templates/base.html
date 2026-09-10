@@ -647,7 +647,7 @@
             <div class="sidebar-footer">
                 <div class="dropup w-100">
                     <div class="google-profile-capsule d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" aria-expanded="false" role="button" title="Account: {{ current_user.display_name or current_user.username }}">
-                        <div class="d-flex align-items-center gap-2 text-truncate me-1" style="min-width:0;">
+                        <div class="d-flex align-items-center gap-2 text-truncate" style="min-width:0; flex:1;">
                             <div class="google-avatar">
                                 {% if current_user.picture %}
                                 <img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">
@@ -660,13 +660,8 @@
                                 <div class="google-email">{{ current_user.email or current_user.username }}</div>
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                            <button type="button" class="google-icon-btn" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="event.stopPropagation();">
-                                <i class="bi bi-moon-stars"></i>
-                            </button>
-                            <a href="{{ url_for('auth.logout') }}" class="google-icon-btn logout" title="Sign out" onclick="event.stopPropagation();">
-                                <i class="bi bi-box-arrow-right"></i>
-                            </a>
+                        <div class="ms-1 me-2 text-white-50">
+                            <i class="bi bi-chevron-up" style="font-size: 0.75rem;"></i>
                         </div>
                     </div>
 
