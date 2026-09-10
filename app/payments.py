@@ -17,22 +17,44 @@ ROLES_OVERRIDE = ('admin', 'mayor', 'treasurer')
 @login_required
 def index():
     events = list(db.events.find({'status': 'active'}).sort('created_at', -1))
+    for e in events:
+        e['amount'] = float(e.get('amount', 0) or 0)
+
     selected_event_id = request.args.get('event_id')
     payments_list = []
     event = None
     students = list(db.students.find({'is_active': 1}).sort('name', 1))
 
     if selected_event_id:
-        event = db.events.find_one({'_id': int(selected_event_id)})
+        query_ids = []
+        try:
+            query_ids.append({'_id': int(selected_event_id)})
+        except (ValueError, TypeError):
+            pass
+        query_ids.append({'_id': str(selected_event_id)})
+
+        event = db.events.find_one({'$or': query_ids}) if len(query_ids) > 1 else db.events.find_one(query_ids[0])
         if event:
+            event['amount'] = float(event.get('amount', 0) or 0)
+            ev_id = event['_id']
+            match_ids = [ev_id]
+            try:
+                match_ids.append(int(ev_id))
+            except (ValueError, TypeError):
+                pass
+            match_ids.append(str(ev_id))
+
             payments_list = list(db.payments.aggregate([
-                {'$match': {'event_id': event['_id']}},
+                {'$match': {'event_id': {'$in': list(set(match_ids))}}},
                 {'$sort': {'student_id': 1}},
                 {'$lookup': {'from': 'users', 'localField': 'confirmed_by', 'foreignField': '_id', 'as': 'confirmer'}},
                 {'$unwind': {'path': '$confirmer', 'preserveNullAndEmptyArrays': True}},
                 {'$addFields': {'confirmer_name': '$confirmer.username'}},
                 {'$project': {'confirmer': 0}}
             ]))
+            for p in payments_list:
+                p['amount_paid'] = float(p.get('amount_paid', 0) or 0)
+                p['locked'] = bool(p.get('locked', False))
 
     return render_template('payments.html', events=events, event=event,
         students=students, payments=payments_list, selected_event_id=selected_event_id)

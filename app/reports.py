@@ -74,26 +74,48 @@ def index():
         )
 
     if rt == 'student':
-        data = list(db.students.aggregate([
-            {'$match': {'is_active': 1, 'deleted': {'$ne': True}}},
-            {'$lookup': {'from': 'transactions', 'let': {'sid': '$_id'},
-                         'pipeline': [
-                             {'$match': {'$expr': {'$eq': ['$student_id', '$$sid']}, 'deleted': {'$ne': True}}},
-                         ], 'as': 'txns'}},
-            {'$project': {'student_id': 1, 'name': 1, 'course': 1,
-                          'total_paid': {'$sum': {'$cond': [{'$eq': ['$txns.type', 'income']}, '$txns.amount', 0]}},
-                          'total_used': {'$sum': {'$cond': [{'$eq': ['$txns.type', 'expense']}, '$txns.amount', 0]}}}},
-            {'$sort': {'name': 1}}
-        ]))
-        paid_by_student = {
-            row['_id']: row['total']
-            for row in db.payments.aggregate([
-                {'$match': {'confirmed': True}},
-                {'$group': {'_id': '$student_id', 'total': {'$sum': '$amount_paid'}}}
-            ])
-        }
-        for row in data:
-            row['total_paid'] = row.get('total_paid', 0) + paid_by_student.get(row['_id'], 0)
+        students = list(db.students.find({'is_active': 1, 'deleted': {'$ne': True}}).sort('name', 1))
+
+        tx_by_student = {}
+        for t in db.transactions.find({'deleted': {'$ne': True}, 'student_id': {'$exists': True}}):
+            sid = t['student_id']
+            tx_by_student.setdefault(sid, {'inc': 0.0, 'exp': 0.0})
+            amt = float(t.get('amount', 0) or 0)
+            if t.get('type') == 'income':
+                tx_by_student[sid]['inc'] += amt
+            elif t.get('type') == 'expense':
+                tx_by_student[sid]['exp'] += amt
+
+        for t in db.transactions.find({'deleted': {'$ne': True}, 'student_ids': {'$exists': True, '$ne': None}}):
+            amt = float(t.get('amount', 0) or 0)
+            sids = t.get('student_ids') or []
+            for sid in sids:
+                tx_by_student.setdefault(sid, {'inc': 0.0, 'exp': 0.0})
+                if t.get('type') == 'income':
+                    tx_by_student[sid]['inc'] += amt
+                elif t.get('type') == 'expense':
+                    tx_by_student[sid]['exp'] += amt
+
+        pmt_by_student = {}
+        for p in db.payments.find({'confirmed': True}):
+            sid = p.get('student_id')
+            amt = float(p.get('amount_paid', 0) or 0)
+            pmt_by_student[sid] = pmt_by_student.get(sid, 0.0) + amt
+
+        data = []
+        for s in students:
+            sid = s['_id']
+            tx_totals = tx_by_student.get(sid, {'inc': 0.0, 'exp': 0.0})
+            total_paid = tx_totals['inc'] + pmt_by_student.get(sid, 0.0)
+            total_used = tx_totals['exp']
+            data.append({
+                '_id': sid,
+                'student_id': s.get('student_id', ''),
+                'name': s.get('name', ''),
+                'course': s.get('course', ''),
+                'total_paid': total_paid,
+                'total_used': total_used,
+            })
         return render_template('reports.html', report_type=rt, data=data)
 
     if rt == 'date_range':
