@@ -323,6 +323,45 @@
             border-color: var(--primary-light);
         }
 
+        /* ── Password Visibility Eye Toggle ── */
+        .password-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .password-input-wrap input {
+            padding-right: 2.75rem !important;
+        }
+        .btn-toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent !important;
+            border: none !important;
+            color: var(--text-muted, #94a3b8) !important;
+            padding: 0;
+            cursor: pointer;
+            font-size: 1.15rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease, transform 0.2s ease;
+            z-index: 5;
+            line-height: 1;
+        }
+        .btn-toggle-password:hover {
+            color: var(--primary) !important;
+            transform: translateY(-50%) scale(1.1);
+        }
+        [data-theme="dark"] .btn-toggle-password {
+            color: #94a3b8 !important;
+        }
+        [data-theme="dark"] .btn-toggle-password:hover {
+            color: var(--primary-light) !important;
+        }
+
         @media (min-width: 768px) {
             .top-nav-bar {
                 display: none !important;
@@ -1387,6 +1426,28 @@
             if (window.innerWidth >= 768 && localStorage.getItem('sidebar-collapsed') === 'true') {
                 document.querySelector('.app-wrapper')?.classList.add('sidebar-collapsed');
             }
+
+            // Universal Password Visibility Eye Toggle
+            document.querySelectorAll('.btn-toggle-password').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var wrap = this.closest('.password-input-wrap');
+                    var input = wrap ? wrap.querySelector('input') : this.parentElement.querySelector('input');
+                    if (!input) return;
+                    var icon = this.querySelector('i');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon?.classList.replace('bi-eye', 'bi-eye-slash');
+                        this.title = 'Hide password';
+                        this.setAttribute('aria-label', 'Hide password');
+                    } else {
+                        input.type = 'password';
+                        icon?.classList.replace('bi-eye-slash', 'bi-eye');
+                        this.title = 'Show password';
+                        this.setAttribute('aria-label', 'Show password');
+                    }
+                });
+            });
 
             document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
             document.querySelectorAll('.avatar img[data-fallback]').forEach(function(img) {

@@ -75,7 +75,15 @@
             <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
             <div class="modal-body">
                 <div class="mb-3"><label class="form-label-modern" for="usr-username">Username</label><input type="text" id="usr-username" name="username" class="form-control form-modern" required placeholder="Choose a username"></div>
-                <div class="mb-3"><label class="form-label-modern" for="usr-password">Password</label><input type="password" id="usr-password" name="password" class="form-control form-modern" required minlength="4"></div>
+                <div class="mb-3">
+                    <label class="form-label-modern" for="usr-password">Password</label>
+                    <div class="password-input-wrap">
+                        <input type="password" id="usr-password" name="password" class="form-control form-modern pe-5" required minlength="4" placeholder="Enter password">
+                        <button type="button" class="btn-toggle-password" title="Show password" aria-label="Toggle password visibility">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
                 <div class="mb-3"><label class="form-label-modern" for="usr-role">Role</label>
                     <select id="usr-role" name="role" class="form-control form-modern">
                         <option value="staff">Staff (Normal User)</option>

@@ -176,7 +176,12 @@
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control" required placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;">
+                <div class="password-input-wrap">
+                    <input type="password" id="password" name="password" class="form-control pe-5" required placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;">
+                    <button type="button" class="btn-toggle-password" title="Show password" aria-label="Toggle password visibility">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
             </div>
             <button type="submit" class="login-btn">Sign In</button>
         </form>
