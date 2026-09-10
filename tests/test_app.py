@@ -252,6 +252,23 @@ def test_dashboard_disbursement_categories(client, db):
     assert 'Supplies' in html
 
 
+def test_transaction_add_with_others_payee(client, db):
+    login(client, db, 'admin')
+    token = _csrf(client)
+    resp = client.post('/transactions/add', data={
+        '_csrf_token': token,
+        'type': 'expense',
+        'amount': '350.00',
+        'recipient_type': 'others',
+        'payee': 'Hardware Supply Co.',
+        'description': 'Door hinge repair',
+        'payment_method': 'cash'
+    }, follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert 'Hardware Supply Co.' in html
+
+
 def _make_user(db, username, role, password='secret123'):
     from werkzeug.security import generate_password_hash
     db.users.insert_one({

@@ -13,7 +13,7 @@
     <div class="card-body-modern p-0">
         <div class="table-responsive">
             <table class="table table-modern datatable align-middle mb-0" aria-label="Financial transactions">
-                <thead><tr><th>Date</th><th>Type</th><th>Receipt #</th><th>Student</th><th>Description</th><th style="text-align:right">Amount</th><th>By</th><th style="width:50px"></th></tr></thead>
+                <thead><tr><th>Date</th><th>Type</th><th>Receipt #</th><th>Recipient / Student</th><th>Description</th><th style="text-align:right">Amount</th><th>By</th><th style="width:50px"></th></tr></thead>
                 <tbody>
                     {% for t in transactions %}
                     <tr>
@@ -24,7 +24,7 @@
                             </span>
                         </td>
                         <td><code class="code-modern">{{ t.receipt or t.reference or '—' }}</code></td>
-                        <td>{% if t.student_names %}<strong>{{ t.student_names|join(', ') }}</strong>{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
+                        <td>{% if t.student_names %}<strong>{{ t.student_names|join(', ') }}</strong>{% elif t.payee %}<span class="badge bg-secondary-subtle text-secondary" style="font-size:0.75rem;">{{ t.payee }}</span>{% else %}<span style="color:var(--text-muted);">—</span>{% endif %}</td>
                         <td>{{ t.description or '<span style="color:var(--text-muted);">—</span>'|safe }}</td>
                         <td style="text-align:right;font-weight:700;color:{{ '#059669' if t.type=='income' else '#dc2626' }};font-size:0.95rem;">{{ "+" if t.type=='income' else "-" }}₱{{ "%.2f"|format(t.amount) }}</td>
                         <td style="font-size:.75rem;color:var(--text-muted);">{{ t.username or '—' }}</td>
@@ -69,14 +69,41 @@
                         <input type="date" id="tx-date" name="transaction_date" class="form-control form-modern" value="{{ now.strftime('%Y-%m-%d') }}">
                     </div>
                 </div>
-                <div class="row g-3 mt-3">
-                    <div class="col-md-4">
-                        <label class="form-label-modern" for="tx-students">Students <span style="color:#94a3b8;font-weight:400;">(optional, multiple)</span></label>
+                <!-- Recipient Type: Where the Money Goes / Source -->
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label class="form-label-modern mb-1 d-block">Where the money will go / Recipient</label>
+                        <div class="d-flex gap-3 align-items-center mb-1 flex-wrap">
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="radio" name="recipient_type" id="recipStudent" value="student" checked>
+                                <label class="form-check-label fw-semibold" for="recipStudent" style="font-size:.85rem; cursor:pointer;"><i class="bi bi-people-fill text-primary"></i> Students (Select Student/User)</label>
+                            </div>
+                            <div class="form-check form-check-inline mb-0">
+                                <input class="form-check-input" type="radio" name="recipient_type" id="recipOthers" value="others">
+                                <label class="form-check-label fw-semibold" for="recipOthers" style="font-size:.85rem; cursor:pointer;"><i class="bi bi-building-fill text-secondary"></i> Others (Vendor / Service / External)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <!-- Student selector (shown when Students is selected) -->
+                    <div class="col-md-6" id="studentSelectWrapper">
+                        <label class="form-label-modern" for="tx-students">Select Student(s)</label>
                         <select id="tx-students" name="student_ids" class="form-control form-modern student-select" multiple>
                             {% for s in students %}<option value="{{ s._id }}">{{ s.name }} ({{ s.student_id }})</option>{% endfor %}
                         </select>
+                        <div class="text-muted" style="font-size:.7rem; margin-top:2px;">Select one or more students</div>
                     </div>
-                    <div class="col-md-4">
+
+                    <!-- Others / Payee input (shown when Others is selected) -->
+                    <div class="col-md-6 d-none" id="othersPayeeWrapper">
+                        <label class="form-label-modern" for="tx-payee">Payee / Organization / Vendor Name</label>
+                        <input type="text" id="tx-payee" name="payee" class="form-control form-modern" placeholder="e.g. UniScan, School Supplies Store, Grasscutter Operator">
+                        <div class="text-muted" style="font-size:.7rem; margin-top:2px;">Enter the recipient or company name</div>
+                    </div>
+
+                    <div class="col-md-6">
                         <label class="form-label-modern" for="tx-method">Payment Method</label>
                         <select id="tx-method" name="payment_method" class="form-control form-modern">
                             <option value="cash">Cash</option>
@@ -86,9 +113,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="row g-3 mt-3">
+                <div class="row g-3 mt-2">
                     <div class="col-md-6">
-                        <label class="form-label-modern" for="tx-desc">Description</label>
+                        <label class="form-label-modern" for="tx-desc">Description / Purpose</label>
                         <input type="text" id="tx-desc" name="description" class="form-control form-modern" placeholder="Brief description">
                     </div>
                     <div class="col-md-6">
@@ -104,6 +131,30 @@
         </form>
     </div></div>
 </div>
+
+<script nonce="{{ csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    const studentWrap = document.getElementById('studentSelectWrapper');
+    const othersWrap = document.getElementById('othersPayeeWrapper');
+    const payeeInput = document.getElementById('tx-payee');
+
+    document.querySelectorAll('input[name="recipient_type"]').forEach(function(r) {
+        r.addEventListener('change', function() {
+            if (this.value === 'student') {
+                studentWrap.classList.remove('d-none');
+                othersWrap.classList.add('d-none');
+                if (payeeInput) payeeInput.value = '';
+            } else {
+                studentWrap.classList.add('d-none');
+                othersWrap.classList.remove('d-none');
+                if (typeof $ !== 'undefined') {
+                    $('#tx-students').val(null).trigger('change');
+                }
+            }
+        });
+    });
+});
+</script>
 
 
 {% endblock %}
