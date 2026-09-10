@@ -448,16 +448,46 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Three.js failed to load dragon:', error);
     });
 
+    let roarTimeout = null;
+    let returnToFlyTimeout = null;
+
     window.switchDragonAnimation = function(name) {
         if (!mixer) return;
         const targetAction = actions[name.toLowerCase()];
         if (!targetAction || targetAction === activeAction) return;
+
+        // Clear any pending audio timer or return-to-fly timer
+        if (roarTimeout) {
+            clearTimeout(roarTimeout);
+            roarTimeout = null;
+        }
+        if (returnToFlyTimeout) {
+            clearTimeout(returnToFlyTimeout);
+            returnToFlyTimeout = null;
+        }
 
         if (activeAction) {
             activeAction.fadeOut(0.25);
         }
         targetAction.reset().fadeIn(0.25).play();
         activeAction = targetAction;
+
+        // Only roar audio when the dragon actually opens its mouth (at t = 2.15s)!
+        if (name.toLowerCase() === 'roar') {
+            roarTimeout = setTimeout(function() {
+                playRoarSound();
+                roarTimeout = null;
+            }, 2150);
+
+            // Automatically transition back to flying animation once roar finishes
+            returnToFlyTimeout = setTimeout(function() {
+                document.querySelectorAll('.btn-dragon-act').forEach(b => {
+                    b.classList.toggle('active', b.dataset.anim === 'fly');
+                });
+                window.switchDragonAnimation('fly');
+                returnToFlyTimeout = null;
+            }, 4600);
+        }
     };
 
     function playRoarSound() {
@@ -550,9 +580,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const anim = this.dataset.anim;
             if (window.switchDragonAnimation) {
                 window.switchDragonAnimation(anim);
-            }
-            if (anim === 'roar') {
-                playRoarSound();
             }
         });
     });
