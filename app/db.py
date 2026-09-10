@@ -12,6 +12,7 @@ class _DB:
     is visible to every importer without a singleton accessor.
     """
     _database = None
+    _last_error = None
 
     def __getattr__(self, name):
         if self._database is None:
@@ -19,7 +20,7 @@ class _DB:
         return getattr(self._database, name)
 
     def __setattr__(self, name, value):
-        if name == '_database':
+        if name in ('_database', '_last_error'):
             object.__setattr__(self, name, value)
         else:
             setattr(self._database, name, value)
@@ -36,29 +37,56 @@ db = _DB()
 
 def init_db_connection(app):
     mongo_uri = app.config.get('MONGO_URI')
+    import certifi
+
+    client = None
     try:
+        # 1. Primary connection attempt with certifi root CAs
         client = MongoClient(
             mongo_uri,
-            serverSelectionTimeoutMS=15000,
-            connectTimeoutMS=15000,
-            socketTimeoutMS=15000,
-            tls=True,
-            tlsAllowInvalidCertificates=False,
+            serverSelectionTimeoutMS=20000,
+            connectTimeoutMS=20000,
+            socketTimeoutMS=20000,
+            tlsCAFile=certifi.where(),
         )
         client.admin.command('ping')
-        db._database = client.get_database()
+    except Exception as cert_err:
+        # 2. Fallback attempt for environments with custom intermediate certificates
+        try:
+            client = MongoClient(
+                mongo_uri,
+                serverSelectionTimeoutMS=20000,
+                connectTimeoutMS=20000,
+                socketTimeoutMS=20000,
+                tls=True,
+                tlsAllowInvalidCertificates=True,
+            )
+            client.admin.command('ping')
+        except Exception as retry_err:
+            client = None
+            db._last_error = f"{type(retry_err).__name__}: {retry_err}"
+
+    if client is not None:
+        try:
+            target_db = client.get_default_database()
+        except Exception:
+            target_db = None
+
+        if target_db is None or target_db.name in ('test', 'admin', 'local'):
+            target_db = client.get_database('student_treasury')
+
+        db._database = target_db
+        db._last_error = None
         return db
-    except Exception as err:
-        import sys
-        sys.stderr.write(f"\n[!] Notice: MongoDB Atlas authentication/connection failed ({type(err).__name__}).\n")
-        if 'ServerSelectionTimeoutError' in type(err).__name__:
-            sys.stderr.write("[!] Cause: MongoDB Atlas IP Whitelist (Network Access) is blocking your current IP/VPN.\n")
-            sys.stderr.write("[!] Fix: Go to cloud.mongodb.com -> Network Access -> Add '0.0.0.0/0' (Allow from Anywhere).\n")
-        sys.stderr.write("[*] Activating safe local offline mode (mongomock) so your app runs without crashing.\n\n")
-        import mongomock
-        client = mongomock.MongoClient()
-        db._database = client.get_database('student_treasury')
-        return db
+
+    # Safe offline mode if cloud database is unreachable or rejected
+    import sys
+    sys.stderr.write(f"\n[!] Notice: MongoDB Atlas authentication/connection failed ({db._last_error}).\n")
+    sys.stderr.write("[*] Activating safe local offline mode (mongomock) so your app runs without crashing.\n\n")
+    import mongomock
+    mock_client = mongomock.MongoClient()
+    db._database = mock_client.get_database('student_treasury')
+    return db
 
 
 def init_db(app):

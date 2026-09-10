@@ -1,11 +1,31 @@
 from datetime import datetime
 
-from flask import Blueprint, render_template
+from flask import Blueprint, jsonify, render_template
 from flask_login import login_required
 
 from .db import db, get_financial_totals
 
 bp = Blueprint('dashboard', __name__)
+
+
+@bp.route('/health/db')
+def db_health():
+    is_mock = 'mongomock' in type(db._database).__module__
+    try:
+        events_cnt = db.events.count_documents({})
+        students_cnt = db.students.count_documents({})
+    except Exception:
+        events_cnt = -1
+        students_cnt = -1
+
+    return jsonify({
+        'status': 'connected' if not is_mock else 'offline_fallback',
+        'is_mock': is_mock,
+        'last_error': getattr(db, '_last_error', None),
+        'database_name': getattr(db._database, 'name', None),
+        'events_count': events_cnt,
+        'students_count': students_cnt,
+    })
 
 
 @bp.route('/')
