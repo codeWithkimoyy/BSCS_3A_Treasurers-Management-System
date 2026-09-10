@@ -182,15 +182,22 @@
             padding: .75rem;
             border-top: 1px solid rgba(255,255,255,.08);
             position: relative;
+            overflow: visible !important;
+        }
+        .sidebar-footer .dropup {
+            position: relative;
         }
         .google-profile-capsule {
-            background: rgba(255,255,255,.06);
+            background: rgba(255,255,255,.07);
             border: 1px solid rgba(255,255,255,.12);
             border-radius: 50px;
-            padding: 5px 8px 5px 5px;
+            padding: 5px 8px 5px 6px;
             cursor: pointer;
             transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
+            display: flex;
+            align-items: center;
+            width: 100%;
         }
         .google-profile-capsule:hover {
             background: rgba(255,255,255,.12);
@@ -207,11 +214,28 @@
             overflow: hidden;
             border: 2px solid rgba(255,255,255,.2);
             box-shadow: 0 2px 6px rgba(0,0,0,.2);
+            transition: all .2s ease;
         }
         .google-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-        .google-user-text { min-width: 0; flex: 1; padding: 0 .25rem; }
+        .google-user-text { min-width: 0; flex: 1; padding: 0 .35rem 0 .25rem; }
         .google-name { color: #fff; font-size: .82rem; font-weight: 700; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
         .google-email { color: rgba(255,255,255,.6); font-size: .68rem; line-height: 1.2; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-top: 1px; }
+        .google-chevron { flex-shrink: 0; }
+        .sidebar-footer .google-profile-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            width: 100%;
+            min-width: 275px;
+            margin-bottom: 8px;
+            z-index: 1060;
+            border-radius: 24px !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 20px 60px rgba(0,0,0,.35) !important;
+            background: var(--surface) !important;
+            color: var(--text-main) !important;
+            overflow: hidden;
+        }
         
         .google-icon-btn {
             background: transparent !important;
@@ -336,39 +360,45 @@
                 margin: 0 !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer {
-                padding: 0.75rem 0.4rem !important;
+                padding: 0.75rem 0 !important;
                 overflow: visible !important;
+                display: flex !important;
+                justify-content: center !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer .dropup {
+                width: auto !important;
                 display: flex !important;
                 justify-content: center !important;
                 position: static !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-capsule {
+                background: transparent !important;
+                border: none !important;
                 border-radius: 50% !important;
-                width: 44px !important;
-                height: 44px !important;
                 padding: 0 !important;
+                width: auto !important;
+                height: auto !important;
+                margin: 0 auto !important;
+                box-shadow: none !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                margin: 0 auto !important;
-                border: 2px solid rgba(255,255,255,.25) !important;
-                background: rgba(255,255,255,.1) !important;
             }
-            .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-capsule > div {
-                justify-content: center !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                flex: none !important;
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-user-text,
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-chevron {
+                display: none !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer .google-avatar {
-                width: 36px !important;
-                height: 36px !important;
+                width: 44px !important;
+                height: 44px !important;
                 margin: 0 auto !important;
-                box-shadow: none !important;
-                border: none !important;
+                border: 2px solid rgba(255,255,255,.3) !important;
+                box-shadow: 0 4px 14px rgba(0,0,0,.35) !important;
+                display: flex !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-avatar:hover {
+                border-color: #fff !important;
+                transform: scale(1.08);
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-menu {
                 position: fixed !important;
@@ -379,7 +409,7 @@
                 margin-bottom: 0 !important;
                 z-index: 1080 !important;
                 transform: none !important;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55) !important;
             }
         }
 
@@ -1098,21 +1128,19 @@
             </nav>
             <div class="sidebar-footer">
                 <div class="dropup w-100">
-                    <div class="google-profile-capsule d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" role="button" title="Account: {{ current_user.display_name or current_user.username }}">
-                        <div class="d-flex align-items-center gap-2 text-truncate" style="min-width:0; flex:1;">
-                            <div class="google-avatar">
-                                {% if current_user.picture %}
-                                <img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">
-                                {% else %}
-                                <span>{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
-                                {% endif %}
-                            </div>
-                            <div class="google-user-text">
-                                <div class="google-name">{{ current_user.display_name or current_user.username }}</div>
-                                <div class="google-email">{{ current_user.email or current_user.username }}</div>
-                            </div>
+                    <div class="google-profile-capsule" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" role="button" title="Account: {{ current_user.display_name or current_user.username }}">
+                        <div class="google-avatar">
+                            {% if current_user.picture %}
+                            <img src="{{ current_user.picture }}" alt="" aria-label="Profile photo" data-fallback="{{ (current_user.display_name or current_user.username)[0]|upper }}">
+                            {% else %}
+                            <span>{{ (current_user.display_name or current_user.username)[0]|upper }}</span>
+                            {% endif %}
                         </div>
-                        <div class="ms-1 me-2 text-white-50">
+                        <div class="google-user-text">
+                            <div class="google-name">{{ current_user.display_name or current_user.username }}</div>
+                            <div class="google-email">{{ current_user.email or current_user.username }}</div>
+                        </div>
+                        <div class="google-chevron ms-auto text-white-50 pe-1">
                             <i class="bi bi-chevron-up" style="font-size: 0.75rem;"></i>
                         </div>
                     </div>
