@@ -71,7 +71,7 @@
             transition: width .25s cubic-bezier(0.4, 0, 0.2, 1), transform .25s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1040;
             flex-shrink: 0;
-            overflow-x: hidden;
+            overflow: visible;
         }
         .sidebar-brand {
             padding: 1.15rem 1rem;
@@ -300,11 +300,8 @@
         }
 
         @media (min-width: 768px) {
-            .top-nav-bar #topHamburgerBtn {
+            .top-nav-bar {
                 display: none !important;
-            }
-            .app-wrapper.sidebar-collapsed .top-nav-bar #topHamburgerBtn {
-                display: inline-flex !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar {
                 width: 74px !important;
@@ -340,14 +337,49 @@
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer {
                 padding: 0.75rem 0.4rem !important;
+                overflow: visible !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer .dropup {
+                display: flex !important;
+                justify-content: center !important;
+                position: static !important;
             }
             .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-capsule {
                 border-radius: 50% !important;
-                width: 42px !important;
-                height: 42px !important;
+                width: 44px !important;
+                height: 44px !important;
                 padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
                 justify-content: center !important;
                 margin: 0 auto !important;
+                border: 2px solid rgba(255,255,255,.25) !important;
+                background: rgba(255,255,255,.1) !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-capsule > div {
+                justify-content: center !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                flex: none !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-avatar {
+                width: 36px !important;
+                height: 36px !important;
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .app-wrapper.sidebar-collapsed .sidebar-footer .google-profile-menu {
+                position: fixed !important;
+                left: 84px !important;
+                bottom: 12px !important;
+                top: auto !important;
+                width: 300px !important;
+                margin-bottom: 0 !important;
+                z-index: 1080 !important;
+                transform: none !important;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
             }
         }
 
@@ -1066,7 +1098,7 @@
             </nav>
             <div class="sidebar-footer">
                 <div class="dropup w-100">
-                    <div class="google-profile-capsule d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" aria-expanded="false" role="button" title="Account: {{ current_user.display_name or current_user.username }}">
+                    <div class="google-profile-capsule d-flex align-items-center justify-content-between" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" role="button" title="Account: {{ current_user.display_name or current_user.username }}">
                         <div class="d-flex align-items-center gap-2 text-truncate" style="min-width:0; flex:1;">
                             <div class="google-avatar">
                                 {% if current_user.picture %}
