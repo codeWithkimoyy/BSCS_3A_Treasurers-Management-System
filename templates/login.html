@@ -282,6 +282,7 @@
             <div class="dragon-caption">
                 <strong>Red Dragon Mascot</strong> &bull; Protector of Class Treasury
             </div>
+            <audio id="dragonRoarAudio" src="{{ url_for('static', filename='dragon_roar.wav') }}" preload="auto"></audio>
         </div>
 
         <!-- Right: Login Card -->
@@ -459,13 +460,99 @@ document.addEventListener('DOMContentLoaded', function() {
         activeAction = targetAction;
     };
 
+    function playRoarSound() {
+        const audio = document.getElementById('dragonRoarAudio');
+        if (audio) {
+            audio.currentTime = 0;
+            const p = audio.play();
+            if (p !== undefined) {
+                p.catch(function() {
+                    synthesizeDragonRoar();
+                });
+            }
+        } else {
+            synthesizeDragonRoar();
+        }
+    }
+
+    function synthesizeDragonRoar() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const now = ctx.currentTime;
+            const dur = 2.8;
+
+            const osc = ctx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(45, now + dur);
+
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(450, now);
+            filter.frequency.exponentialRampToValueAtTime(110, now + dur);
+            filter.Q.setValueAtTime(4.0, now);
+
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.01, now);
+            gain.gain.linearRampToValueAtTime(0.7, now + 0.2);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+            const shaper = ctx.createWaveShaper();
+            const curve = new Float32Array(256);
+            for (let i = 0; i < 256; i++) {
+                const x = (i * 2) / 256 - 1;
+                curve[i] = (Math.PI + 4) * x / (Math.PI + 4 * Math.abs(x));
+            }
+            shaper.curve = curve;
+
+            const bufSize = ctx.sampleRate * dur;
+            const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+            const d = buf.getChannelData(0);
+            for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * 0.35;
+            const noise = ctx.createBufferSource();
+            noise.buffer = buf;
+
+            const nFilter = ctx.createBiquadFilter();
+            nFilter.type = 'bandpass';
+            nFilter.frequency.setValueAtTime(800, now);
+            nFilter.frequency.exponentialRampToValueAtTime(220, now + dur);
+
+            const nGain = ctx.createGain();
+            nGain.gain.setValueAtTime(0.01, now);
+            nGain.gain.linearRampToValueAtTime(0.4, now + 0.3);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+            osc.connect(shaper);
+            shaper.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+
+            noise.connect(nFilter);
+            nFilter.connect(nGain);
+            nGain.connect(ctx.destination);
+
+            osc.start(now);
+            noise.start(now);
+            osc.stop(now + dur);
+            noise.stop(now + dur);
+        } catch(e) {}
+    }
+
     document.querySelectorAll('.btn-dragon-act').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelectorAll('.btn-dragon-act').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
+            const anim = this.dataset.anim;
             if (window.switchDragonAnimation) {
-                window.switchDragonAnimation(this.dataset.anim);
+                window.switchDragonAnimation(anim);
+            }
+            if (anim === 'roar') {
+                playRoarSound();
             }
         });
     });
