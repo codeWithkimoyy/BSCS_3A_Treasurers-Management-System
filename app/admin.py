@@ -6,6 +6,7 @@ from flask import (
     current_app,
     flash,
     jsonify,
+    make_response,
     redirect,
     render_template,
     request,
@@ -63,7 +64,9 @@ def app_logo():
     path = logo_file()
     if not path:
         return '', 404
-    return send_file(path)
+    response = make_response(send_file(path))
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 
 @bp.route('/users/add', methods=['POST'])

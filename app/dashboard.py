@@ -9,6 +9,7 @@ bp = Blueprint('dashboard', __name__)
 
 
 @bp.route('/health/db')
+@bp.route('/api/debug-db')
 def db_health():
     is_mock = 'mongomock' in type(db._database).__module__
     raw_uri = current_app.config.get('MONGO_URI') or ''
@@ -25,11 +26,14 @@ def db_health():
         txns_cnt = -1
 
     return jsonify({
+        'connected': not is_mock,
         'status': 'connected' if not is_mock else 'offline_fallback',
         'is_mock': is_mock,
+        'database': getattr(db._database, 'name', None),
+        'database_name': getattr(db._database, 'name', None),
+        'documentCount': events_cnt + students_cnt + txns_cnt if (events_cnt >= 0 and students_cnt >= 0 and txns_cnt >= 0) else -1,
         'uri_starts_with': safe_prefix,
         'last_error': getattr(db, '_last_error', None),
-        'database_name': getattr(db._database, 'name', None),
         'events_count': events_cnt,
         'students_count': students_cnt,
         'transactions_count': txns_cnt

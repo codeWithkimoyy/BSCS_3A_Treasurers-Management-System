@@ -65,14 +65,14 @@
                                     </span>
                                 </td>
                                 <td style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">{{ s.payers }}</td>
-                                <td style="text-align:right;font-weight:700;color:#059669;">₱{{ "%.2f"|format(s.amount) }}</td>
+                                <td class="text-inflow" style="text-align:right;font-weight:700;">₱{{ "%.2f"|format(s.amount) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot>
                             <tr style="background:var(--surface-hover);font-weight:bold;">
                                 <td colspan="3" style="text-align:right;">TOTAL INFLOWS:</td>
-                                <td style="text-align:right;color:#059669;font-weight:800;font-size:0.95rem;">₱{{ "%.2f"|format(income) }}</td>
+                                <td class="text-inflow" style="text-align:right;font-weight:800;font-size:0.95rem;">₱{{ "%.2f"|format(income) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -103,9 +103,9 @@
                             {% for m in monthly %}
                             <tr>
                                 <td><strong>{{ m.mon }}</strong></td>
-                                <td style="text-align:right;color:#059669;font-weight:600;">₱{{ "%.2f"|format(m.inc) }}</td>
-                                <td style="text-align:right;color:#dc2626;font-weight:600;">₱{{ "%.2f"|format(m.exp) }}</td>
-                                <td style="text-align:right;font-weight:700;color:{{ '#059669' if m.net >= 0 else '#dc2626' }};">
+                                <td class="text-inflow" style="text-align:right;font-weight:600;">₱{{ "%.2f"|format(m.inc) }}</td>
+                                <td class="text-outflow" style="text-align:right;font-weight:600;">₱{{ "%.2f"|format(m.exp) }}</td>
+                                <td class="{{ 'text-inflow' if m.net >= 0 else 'text-outflow' }}" style="text-align:right;font-weight:700;">
                                     ₱{{ "%.2f"|format(m.net) }}
                                 </td>
                             </tr>
@@ -114,9 +114,9 @@
                         <tfoot>
                             <tr style="background:var(--surface-hover);font-weight:bold;">
                                 <td>TOTALS:</td>
-                                <td style="text-align:right;color:#059669;font-weight:800;">₱{{ "%.2f"|format(income) }}</td>
-                                <td style="text-align:right;color:#dc2626;font-weight:800;">₱{{ "%.2f"|format(expense) }}</td>
-                                <td style="text-align:right;color:{{ '#059669' if balance >= 0 else '#dc2626' }};font-weight:800;font-size:0.95rem;">₱{{ "%.2f"|format(balance) }}</td>
+                                <td class="text-inflow" style="text-align:right;font-weight:800;">₱{{ "%.2f"|format(income) }}</td>
+                                <td class="text-outflow" style="text-align:right;font-weight:800;">₱{{ "%.2f"|format(expense) }}</td>
+                                <td class="{{ 'text-inflow' if balance >= 0 else 'text-outflow' }}" style="text-align:right;font-weight:800;font-size:0.95rem;">₱{{ "%.2f"|format(balance) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -278,7 +278,7 @@
                                 {{ e.payment_method or 'cash' }}
                             </span>
                         </td>
-                        <td style="text-align:right;font-weight:700;color:#dc2626;font-size:0.95rem;">
+                        <td class="text-outflow" style="text-align:right;font-weight:700;font-size:0.95rem;">
                             ₱{{ "%.2f"|format(e.amount) }}
                         </td>
                     </tr>
@@ -290,7 +290,7 @@
                 <tfoot>
                     <tr style="background:var(--surface-hover);font-weight:bold;">
                         <td colspan="6" style="text-align:right;font-size:0.85rem;">TOTAL DISBURSED (WHERE THE MONEY WENT):</td>
-                        <td style="text-align:right;color:#dc2626;font-weight:800;font-size:1.05rem;">₱{{ "%.2f"|format(total_expense) }}</td>
+                        <td class="text-outflow" style="text-align:right;font-weight:800;font-size:1.05rem;">₱{{ "%.2f"|format(total_expense) }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -334,9 +334,9 @@
                     {% for d in data %}
                     <tr><td><code class="code-modern">{{ d.student_id }}</code></td>
                         <td><strong>{{ d.name }}</strong></td><td>{{ d.course or '—' }}</td>
-                        <td style="text-align:right;color:#059669;font-weight:600;">₱{{ "%.2f"|format(d.total_paid) }}</td>
-                        <td style="text-align:right;color:#dc2626;font-weight:600;">₱{{ "%.2f"|format(d.total_used) }}</td>
-                        <td style="text-align:right;font-weight:700;color:{{ '#059669' if (d.total_paid - d.total_used) >= 0 else '#dc2626' }};">₱{{ "%.2f"|format(d.total_paid - d.total_used) }}</td>
+                        <td class="text-inflow" style="text-align:right;font-weight:600;">₱{{ "%.2f"|format(d.total_paid) }}</td>
+                        <td class="text-outflow" style="text-align:right;font-weight:600;">₱{{ "%.2f"|format(d.total_used) }}</td>
+                        <td class="{{ 'text-inflow' if (d.total_paid - d.total_used) >= 0 else 'text-outflow' }}" style="text-align:right;font-weight:700;">₱{{ "%.2f"|format(d.total_paid - d.total_used) }}</td>
                     </tr>
                     {% endfor %}
                     {% if not data %}
@@ -382,7 +382,7 @@
                         <td><span class="badge {{ 'badge-income' if t.type=='income' else 'badge-expense' }}">{{ t.type|title }}</span></td>
                         <td>{{ t.student_name or '—' }}</td>
                         <td>{{ t.description or '—' }}</td>
-                        <td style="text-align:right;font-weight:600;color:{{ '#059669' if t.type=='income' else '#dc2626' }};">₱{{ "%.2f"|format(t.amount) }}</td>
+                        <td class="{{ 'text-inflow' if t.type=='income' else 'text-outflow' }}" style="text-align:right;font-weight:600;">₱{{ "%.2f"|format(t.amount) }}</td>
                         <td style="font-size:.75rem;">{{ t.reference or '—' }}</td>
                     </tr>
                     {% endfor %}

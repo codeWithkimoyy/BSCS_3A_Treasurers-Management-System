@@ -270,6 +270,16 @@ def test_transaction_add_with_others_payee(client, db):
     assert 'Hardware Supply Co.' in html
 
 
+def test_api_debug_db(client, db):
+    resp = client.get('/api/debug-db')
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert 'connected' in data
+    assert 'status' in data
+    assert 'documentCount' in data
+    assert 'database' in data
+
+
 def _make_user(db, username, role, password='secret123'):
     from werkzeug.security import generate_password_hash
     db.users.insert_one({
