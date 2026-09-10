@@ -4,3 +4,4 @@ instance/
 scripts/check.py
 scripts/check_live.py
 *.pyc
+/red_dragon.glb
