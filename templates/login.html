@@ -394,12 +394,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 child.receiveShadow = true;
             }
         });
+
+        // Normalize dragon scale so its full wingspan fits inside the canvas
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = bbox.getSize(new THREE.Vector3());
+        const center = bbox.getCenter(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        const scaleFactor = 3.2 / maxDim;
+        model.scale.setScalar(scaleFactor);
+
+        // Center the scaled dragon at the origin (0, 0, 0)
+        bbox.setFromObject(model);
+        bbox.getCenter(center);
+        model.position.x = -center.x;
+        model.position.y = -center.y + 0.15;
+        model.position.z = -center.z;
         scene.add(model);
 
-        // Center target around the model
-        const bbox = new THREE.Box3().setFromObject(model);
-        const center = bbox.getCenter(new THREE.Vector3());
-        controls.target.set(center.x, center.y + 0.1, center.z);
+        // Center camera controls directly on the dragon's body
+        controls.target.set(0, 0.15, 0);
+        camera.position.set(2.2, 1.6, 3.8);
+        controls.minDistance = 1.5;
+        controls.maxDistance = 9.0;
         controls.update();
 
         // Setup animations
