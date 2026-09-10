@@ -182,8 +182,9 @@ def _register_security_headers(app):
         nonce_str = f"'nonce-{nonce}' " if nonce else ''
         csp = (
             f"default-src 'self'; "
-            f"script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net {nonce_str}; "
-            f"style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net {nonce_str}; "
+            f"script-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net 'unsafe-inline' {nonce_str}; "
+            f"style-src 'self' https://accounts.google.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net 'unsafe-inline' {nonce_str}; "
+            f"style-src-elem 'self' https://accounts.google.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdn.datatables.net 'unsafe-inline' {nonce_str}; "
             f"style-src-attr 'unsafe-inline'; "
             f"font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
             f"img-src 'self' data: https:; "
