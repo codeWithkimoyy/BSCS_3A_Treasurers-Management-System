@@ -110,7 +110,7 @@
                         <strong style="font-size:0.85rem;color:var(--danger);">₱{{ "%.2f"|format(c.amount) }}</strong>
                     </div>
                     <div class="progress-modern" style="height:6px;">
-                        <div class="progress-bar-modern" style="width:{{ c.pct }}%;background:{% if 'Refund' in c.name %}#f59e0b{% elif 'Platform' in c.name %}#3b82f6{% elif 'Event' in c.name %}#10b981{% elif 'Supplies' in c.name %}#8b5cf6{% else %}#ef4444{% endif %};"></div>
+                        <div class="progress-bar-modern" style="width:{{ c.pct }}%;height:100%;background:{% if 'Refund' in c.name %}#f59e0b{% elif 'Platform' in c.name %}#3b82f6{% elif 'Event' in c.name %}#10b981{% elif 'Supplies' in c.name %}#8b5cf6{% else %}#ef4444{% endif %};"></div>
                     </div>
                     <div class="d-flex justify-content-between mt-1" style="font-size:0.7rem;color:var(--text-muted);">
                         <span>Share of total outflows</span>
