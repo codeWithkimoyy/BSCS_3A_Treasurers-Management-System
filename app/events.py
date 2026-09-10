@@ -1,10 +1,10 @@
 import csv
-from datetime import date, datetime
 import io
+from datetime import date, datetime
 
+import openpyxl
 from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for
 from flask_login import login_required
-import openpyxl
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
