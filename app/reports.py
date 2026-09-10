@@ -17,9 +17,10 @@ def index():
         balance = income - total_expense
 
         student_map = {s['_id']: s.get('name', '') for s in db.students.find({})}
-        user_map = {u['_id']: u.get('username', '') for u in db.users.find({})}
+        user_map = {u['_id']: u.get('display_name') or u.get('username', '') for u in db.users.find({})}
 
-        raw_expenses = list(db.transactions.find({'type': 'expense', 'deleted': {'$ne': True}}).sort([('transaction_date', -1), ('created_at', -1)]))
+        raw_expenses = [t for t in db.transactions.find({'type': 'expense'}) if not t.get('deleted')]
+        raw_expenses.sort(key=lambda x: (x.get('transaction_date', '') or '', str(x.get('created_at', ''))), reverse=True)
 
         expenses = []
         for e in raw_expenses:
@@ -45,7 +46,7 @@ def index():
                 cat = 'Student Refunds & Adjustments'
             elif any(k in desc for k in ('uniscan', 'system', 'software', 'platform', 'online')):
                 cat = 'Platform & System Services'
-            elif any(k in desc for k in ('freshface', 'acquaintance', 'event', 'party', 'activity')):
+            elif any(k in desc for k in ('freshface', 'acquaintance', 'event', 'party', 'activity', 'intrams')):
                 cat = 'Event Remittances & Programs'
             elif any(k in desc for k in ('supplies', 'printing', 'ink', 'paper', 'materials')):
                 cat = 'Supplies & Materials'
@@ -61,42 +62,6 @@ def index():
         ]
         cat_summary.sort(key=lambda x: -x['amount'])
 
-        # Event-level fund reconciliation
-        events = list(db.events.find({'deleted': {'$ne': True}}).sort('created_at', 1))
-        event_recon = []
-        for ev in events:
-            ev_id = ev['_id']
-            ev_title = ev.get('title', 'Untitled')
-            # payments collected
-            collected_agg = list(db.payments.aggregate([
-                {'$match': {'event_id': ev_id, 'confirmed': True}},
-                {'$group': {'_id': None, 'total': {'$sum': '$amount_paid'}, 'count': {'$sum': 1}}}
-            ]))
-            collected = collected_agg[0]['total'] if collected_agg else 0.0
-            payer_count = collected_agg[0]['count'] if collected_agg else 0
-
-            # expenses tagged to this event
-            exp_match = [
-                e['amount'] for e in categorized_expenses
-                if ev_title.lower() in (e.get('description') or '').lower()
-            ]
-            disbursed = sum(exp_match)
-            variance = collected - disbursed
-
-            event_recon.append({
-                'title': ev_title,
-                'target': ev.get('amount', 0),
-                'collected': collected,
-                'payers': payer_count,
-                'disbursed': disbursed,
-                'variance': variance,
-                'status': 'Balanced' if variance == 0 else ('Fund Subsidized' if variance < 0 else 'Surplus')
-            })
-
-        # Sinking fund summary (non-event payments or Sinking Fund events)
-        sinking_total = sum(r['collected'] for r in event_recon if 'sinking' in r['title'].lower())
-        advances_total = sum(abs(r['variance']) for r in event_recon if r['variance'] < 0)
-
         return render_template(
             'reports.html',
             report_type='transparency',
@@ -105,11 +70,7 @@ def index():
             balance=balance,
             expenses=categorized_expenses,
             cat_summary=cat_summary,
-            event_recon=event_recon,
-            sinking_total=sinking_total,
-            advances_total=advances_total,
-            chart_labels=[c['name'] for c in cat_summary],
-            chart_data=[c['amount'] for c in cat_summary]
+            table_total=sum(float(e.get('amount', 0) or 0) for e in categorized_expenses)
         )
 
     if rt == 'student':
@@ -155,13 +116,107 @@ def index():
             total_exp=sum(r['amount'] for r in txn if r['type'] == 'expense'))
 
     income, expense = get_financial_totals()
-    monthly = list(db.transactions.aggregate([
-        {'$match': {'deleted': {'$ne': True}}},
-        {'$group': {'_id': {'$substr': ['$transaction_date', 0, 7]}, 'inc': {'$sum': {'$cond': [{'$eq': ['$type', 'income']}, '$amount', 0]}}, 'exp': {'$sum': {'$cond': [{'$eq': ['$type', 'expense']}, '$amount', 0]}}}},
-        {'$sort': {'_id': -1}}, {'$limit': 12}, {'$project': {'mon': '$_id', 'inc': 1, 'exp': 1, '_id': 0}}
-    ]))
-    return render_template('reports.html', report_type='summary', income=income, expense=expense,
-        balance=income - expense, monthly=monthly)
+    balance = income - expense
+
+    # 1. Complete Monthly Breakdown combining both confirmed payments and manual transactions
+    months = {}
+    for p in db.payments.find({'confirmed': True}):
+        dt = p.get('confirmed_at')
+        if dt:
+            m = dt.strftime('%Y-%m')
+            months.setdefault(m, {'inc': 0.0, 'exp': 0.0})
+            months[m]['inc'] += float(p.get('amount_paid', 0) or 0)
+
+    for t in db.transactions.find():
+        if t.get('deleted'):
+            continue
+        dt_str = t.get('transaction_date', '')
+        if dt_str:
+            m = dt_str[:7]
+            months.setdefault(m, {'inc': 0.0, 'exp': 0.0})
+            amt = float(t.get('amount', 0) or 0)
+            if t.get('type') == 'income' and not (t.get('description') or '').startswith('Payment:'):
+                months[m]['inc'] += amt
+            elif t.get('type') == 'expense':
+                months[m]['exp'] += amt
+
+    sorted_m = sorted(months.keys(), reverse=True)
+    monthly = [
+        {'mon': m, 'inc': months[m]['inc'], 'exp': months[m]['exp'], 'net': months[m]['inc'] - months[m]['exp']}
+        for m in sorted_m
+    ]
+
+    # 2. Detailed Inflow Breakdown (Event Collections & Direct Inflows)
+    events = list(db.events.find({'deleted': {'$ne': True}}).sort('created_at', 1))
+    inflow_sources = []
+    for ev in events:
+        pmts = list(db.payments.find({'event_id': ev['_id'], 'confirmed': True}))
+        collected = sum(float(p.get('amount_paid', 0) or 0) for p in pmts)
+        if collected > 0:
+            inflow_sources.append({
+                'title': ev.get('title', 'Event'),
+                'type': 'Event Collection',
+                'target': float(ev.get('amount', 0)),
+                'payers': len(pmts),
+                'amount': collected
+            })
+
+    manual_inflows = [
+        t for t in db.transactions.find({'type': 'income'})
+        if not t.get('deleted') and not (t.get('description') or '').startswith('Payment:')
+    ]
+    for t in manual_inflows:
+        inflow_sources.append({
+            'title': t.get('description') or 'Direct Contribution',
+            'type': 'Direct Inflow',
+            'target': float(t.get('amount', 0)),
+            'payers': 1,
+            'amount': float(t.get('amount', 0))
+        })
+    inflow_sources.sort(key=lambda x: -x['amount'])
+
+    # 3. Outflow Categories Breakdown
+    raw_expenses = [t for t in db.transactions.find({'type': 'expense'}) if not t.get('deleted')]
+    categories = {
+        'Student Refunds & Adjustments': 0.0,
+        'Platform & System Services': 0.0,
+        'Event Remittances & Programs': 0.0,
+        'Supplies & Materials': 0.0,
+        'Operations & Miscellaneous': 0.0,
+    }
+    for e in raw_expenses:
+        desc = (e.get('description') or '').lower()
+        amt = float(e.get('amount', 0) or 0)
+        if 'refund' in desc or 'correction' in desc:
+            cat = 'Student Refunds & Adjustments'
+        elif any(k in desc for k in ('uniscan', 'system', 'software', 'platform', 'online')):
+            cat = 'Platform & System Services'
+        elif any(k in desc for k in ('freshface', 'acquaintance', 'event', 'party', 'activity', 'intrams')):
+            cat = 'Event Remittances & Programs'
+        elif any(k in desc for k in ('supplies', 'printing', 'ink', 'paper', 'materials')):
+            cat = 'Supplies & Materials'
+        else:
+            cat = 'Operations & Miscellaneous'
+        categories[cat] += amt
+
+    cat_summary = [
+        {'name': k, 'amount': v, 'pct': (v / expense * 100) if expense > 0 else 0}
+        for k, v in categories.items() if v > 0
+    ]
+    cat_summary.sort(key=lambda x: -x['amount'])
+
+    return render_template(
+        'reports.html',
+        report_type='summary',
+        income=income,
+        expense=expense,
+        balance=balance,
+        monthly=monthly,
+        inflow_sources=inflow_sources,
+        cat_summary=cat_summary,
+        total_inflows_check=sum(s['amount'] for s in inflow_sources),
+        total_outflows_check=sum(c['amount'] for c in cat_summary)
+    )
 
 
 @bp.route('/export')
@@ -284,7 +339,8 @@ def export_liquidation():
     w.writerow(['Date', 'Category', 'Description / Purpose', 'Recipient / Payee', 'Amount (PHP)', 'Reference / Voucher', 'Payment Method'])
 
     student_map = {s['_id']: s.get('name', '') for s in db.students.find({})}
-    raw_expenses = list(db.transactions.find({'type': 'expense', 'deleted': {'$ne': True}}).sort('transaction_date', 1))
+    raw_expenses = [t for t in db.transactions.find({'type': 'expense'}) if not t.get('deleted')]
+    raw_expenses.sort(key=lambda x: (x.get('transaction_date', '') or '', str(x.get('created_at', ''))))
 
     for e in raw_expenses:
         desc = (e.get('description') or '')

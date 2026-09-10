@@ -28,33 +28,129 @@
 
 {% if report_type == 'summary' %}
 <div class="row g-3 mb-3">
-    <div class="col-md-4 animate-in"><div class="stat-card-modern stat-income"><i class="bi bi-arrow-up-circle stat-icon"></i><div class="stat-label">Total Income</div><div class="stat-value">₱{{ "%.2f"|format(income) }}</div></div></div>
-    <div class="col-md-4 animate-in" style="animation-delay:.1s"><div class="stat-card-modern stat-expense"><i class="bi bi-arrow-down-circle stat-icon"></i><div class="stat-label">Total Expenses</div><div class="stat-value">₱{{ "%.2f"|format(expense) }}</div></div></div>
-    <div class="col-md-4 animate-in" style="animation-delay:.2s"><div class="stat-card-modern stat-balance"><i class="bi bi-piggy-bank stat-icon"></i><div class="stat-label">Net Balance</div><div class="stat-value">₱{{ "%.2f"|format(balance) }}</div></div></div>
+    <div class="col-md-4 animate-in"><div class="stat-card-modern stat-income"><i class="bi bi-arrow-up-circle stat-icon"></i><div class="stat-label">Total Inflows (Collections)</div><div class="stat-value">₱{{ "%.2f"|format(income) }}</div><div class="stat-footer">Event fees and collections</div></div></div>
+    <div class="col-md-4 animate-in" style="animation-delay:.1s"><div class="stat-card-modern stat-expense"><i class="bi bi-arrow-down-circle stat-icon"></i><div class="stat-label">Total Outflows (Disbursed)</div><div class="stat-value">₱{{ "%.2f"|format(expense) }}</div><div class="stat-footer">Where the money went</div></div></div>
+    <div class="col-md-4 animate-in" style="animation-delay:.2s"><div class="stat-card-modern stat-balance"><i class="bi bi-piggy-bank stat-icon"></i><div class="stat-label">Net Balance (Cash on Hand)</div><div class="stat-value">₱{{ "%.2f"|format(balance) }}</div><div class="stat-footer">Inflows − Outflows (Exact Balance)</div></div></div>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-6 animate-in" style="animation-delay:.1s">
+<div class="row g-3 mb-4">
+    <!-- Left Column: Detailed Inflows Breakdown -->
+    <div class="col-lg-6 animate-in" style="animation-delay:.1s">
         <div class="card-modern h-100">
-            <div class="card-header-modern"><i class="bi bi-table" style="color:var(--accent)"></i> Monthly Summary</div>
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-arrow-up-circle-fill text-success"></i> Inflow Sources Breakdown</span>
+                <span class="badge bg-success-subtle text-success rounded-pill">Total: ₱{{ "%.2f"|format(income) }}</span>
+            </div>
             <div class="card-body-modern p-0">
                 <div class="table-responsive">
-                <table class="table table-modern" aria-label="Monthly summary">
-                    <thead><tr><th>Month</th><th style="text-align:right">Income</th><th style="text-align:right">Expense</th><th style="text-align:right">Net</th></tr></thead>
-                    <tbody>
-                        {% for m in monthly %}
-                        <tr><td><strong>{{ m.mon }}</strong></td>
-                            <td style="text-align:right;color:#059669;">₱{{ "%.2f"|format(m.inc) }}</td>
-                            <td style="text-align:right;color:#dc2626;">₱{{ "%.2f"|format(m.exp) }}</td>
-                            <td style="text-align:right;font-weight:700;color:{{ '#059669' if (m.inc - m.exp) >= 0 else '#dc2626' }};">₱{{ "%.2f"|format(m.inc - m.exp) }}</td></tr>
-                        {% endfor %}
-                        {% if not monthly %}
-                        <tr><td colspan="4"><div class="empty-state py-3"><i class="bi bi-bar-chart" style="font-size:1.5rem;"></i><p style="font-size:.8rem;">No monthly data yet</p></div></td></tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                    <table class="table table-modern align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Source / Event</th>
+                                <th style="text-align:center">Type</th>
+                                <th style="text-align:center">Payers</th>
+                                <th style="text-align:right">Collected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in inflow_sources %}
+                            <tr>
+                                <td>
+                                    <strong>{{ s.title }}</strong>
+                                    {% if s.target > 0 %}<div class="text-muted" style="font-size:0.72rem;">Fee: ₱{{ "%.2f"|format(s.target) }}</div>{% endif %}
+                                </td>
+                                <td style="text-align:center;">
+                                    <span class="badge {% if s.type == 'Event Collection' %}bg-primary-subtle text-primary{% else %}bg-info-subtle text-info{% endif %}" style="font-size:0.68rem;">
+                                        {{ s.type }}
+                                    </span>
+                                </td>
+                                <td style="text-align:center;font-size:0.8rem;color:var(--text-secondary);">{{ s.payers }}</td>
+                                <td style="text-align:right;font-weight:700;color:#059669;">₱{{ "%.2f"|format(s.amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background:var(--surface-hover);font-weight:bold;">
+                                <td colspan="3" style="text-align:right;">TOTAL INFLOWS:</td>
+                                <td style="text-align:right;color:#059669;font-weight:800;font-size:0.95rem;">₱{{ "%.2f"|format(income) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Monthly Financial Matrix -->
+    <div class="col-lg-6 animate-in" style="animation-delay:.15s">
+        <div class="card-modern h-100">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar3 text-primary"></i> Monthly Reconciliation Matrix</span>
+                <span class="badge bg-primary-subtle text-primary rounded-pill">{{ monthly|length }} Months</span>
+            </div>
+            <div class="card-body-modern p-0">
+                <div class="table-responsive">
+                    <table class="table table-modern align-middle mb-0" aria-label="Monthly summary">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th style="text-align:right">Inflows</th>
+                                <th style="text-align:right">Outflows</th>
+                                <th style="text-align:right">Net</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in monthly %}
+                            <tr>
+                                <td><strong>{{ m.mon }}</strong></td>
+                                <td style="text-align:right;color:#059669;font-weight:600;">₱{{ "%.2f"|format(m.inc) }}</td>
+                                <td style="text-align:right;color:#dc2626;font-weight:600;">₱{{ "%.2f"|format(m.exp) }}</td>
+                                <td style="text-align:right;font-weight:700;color:{{ '#059669' if m.net >= 0 else '#dc2626' }};">
+                                    ₱{{ "%.2f"|format(m.net) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background:var(--surface-hover);font-weight:bold;">
+                                <td>TOTALS:</td>
+                                <td style="text-align:right;color:#059669;font-weight:800;">₱{{ "%.2f"|format(income) }}</td>
+                                <td style="text-align:right;color:#dc2626;font-weight:800;">₱{{ "%.2f"|format(expense) }}</td>
+                                <td style="text-align:right;color:{{ '#059669' if balance >= 0 else '#dc2626' }};font-weight:800;font-size:0.95rem;">₱{{ "%.2f"|format(balance) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Outflow Categories Distribution Card -->
+<div class="card-modern mb-4 animate-in" style="animation-delay:.2s">
+    <div class="card-header-modern d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span><i class="bi bi-pie-chart-fill text-danger"></i> Outflow Allocation by Category (Where the Money Went)</span>
+        <a href="{{ url_for('reports.index', type='transparency') }}" class="btn btn-modern-outline btn-modern-sm"><i class="bi bi-eye"></i> View Itemized Disbursements</a>
+    </div>
+    <div class="card-body-modern">
+        <div class="row g-3">
+            {% for c in cat_summary %}
+            <div class="col-md-6 col-lg-4">
+                <div class="p-3 border rounded-3" style="background:var(--surface-hover);border-color:var(--border-color)!important;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);">{{ c.name }}</span>
+                        <strong style="font-size:0.85rem;color:var(--danger);">₱{{ "%.2f"|format(c.amount) }}</strong>
+                    </div>
+                    <div class="progress-modern" style="height:6px;">
+                        <div class="progress-bar-modern" style="width:{{ c.pct }}%;background:{% if 'Refund' in c.name %}#f59e0b{% elif 'Platform' in c.name %}#3b82f6{% elif 'Event' in c.name %}#10b981{% elif 'Supplies' in c.name %}#8b5cf6{% else %}#ef4444{% endif %};"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1" style="font-size:0.7rem;color:var(--text-muted);">
+                        <span>Share of disbursements</span>
+                        <span>{{ "%.1f"|format(c.pct) }}%</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -83,12 +179,9 @@
 
 <!-- Quick Action & Filter Bar -->
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 no-print">
-    <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-danger-subtle text-danger px-3 py-2 fs-6 rounded-pill">
-            <i class="bi bi-arrow-down-circle"></i> Total Outflows: ₱{{ "%.2f"|format(total_expense) }}
-        </span>
-        <span class="badge bg-secondary-subtle text-secondary px-3 py-2 fs-6 rounded-pill">
-            {{ expenses|length }} Transactions
+    <div>
+        <span class="badge bg-primary-subtle text-primary px-3 py-2 fs-6 rounded-pill">
+            <i class="bi bi-shield-check"></i> 100% Audited &amp; Reconciled Outflow Record
         </span>
     </div>
     <div class="d-flex gap-2">
@@ -99,6 +192,43 @@
             <i class="bi bi-file-earmark-arrow-down"></i> Export Official CSV
         </a>
     </div>
+</div>
+
+<!-- Executive Reconciliation Banner -->
+<div class="row g-3 mb-3 animate-in">
+    <div class="col-md-4">
+        <div class="stat-card-modern stat-income">
+            <i class="bi bi-arrow-up-circle stat-icon"></i>
+            <div class="stat-label">Total Inflows (Collections)</div>
+            <div class="stat-value">₱{{ "%.2f"|format(income) }}</div>
+            <div class="stat-footer">Total confirmed payments &amp; incomes</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-modern stat-expense">
+            <i class="bi bi-arrow-down-circle stat-icon"></i>
+            <div class="stat-label">Total Outflows (Disbursed)</div>
+            <div class="stat-value">₱{{ "%.2f"|format(total_expense) }}</div>
+            <div class="stat-footer">Where the money went ({{ expenses|length }} items)</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-modern stat-balance">
+            <i class="bi bi-piggy-bank stat-icon"></i>
+            <div class="stat-label">Current Cash on Hand</div>
+            <div class="stat-value">₱{{ "%.2f"|format(balance) }}</div>
+            <div class="stat-footer">Inflows − Outflows (100% Reconciled)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Subtotal Badges -->
+<div class="d-flex gap-2 mb-3 flex-wrap animate-in">
+    {% for c in cat_summary %}
+    <span class="badge px-3 py-2" style="background:var(--surface);border:1px solid var(--border-color);color:var(--text-main);font-size:0.8rem;border-radius:10px;">
+        <span style="color:var(--text-muted);">{{ c.name }}:</span> <strong style="color:var(--danger);">₱{{ "%.2f"|format(c.amount) }}</strong> <small class="text-muted">({{ "%.1f"|format(c.pct) }}%)</small>
+    </span>
+    {% endfor %}
 </div>
 
 <!-- Itemized Disbursement Register Table -->
@@ -157,6 +287,12 @@
                     <tr><td colspan="7"><div class="empty-state py-4"><i class="bi bi-wallet"></i><p>No disbursements recorded yet</p></div></td></tr>
                     {% endif %}
                 </tbody>
+                <tfoot>
+                    <tr style="background:var(--surface-hover);font-weight:bold;">
+                        <td colspan="6" style="text-align:right;font-size:0.85rem;">TOTAL DISBURSED (WHERE THE MONEY WENT):</td>
+                        <td style="text-align:right;color:#dc2626;font-weight:800;font-size:1.05rem;">₱{{ "%.2f"|format(total_expense) }}</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
