@@ -187,6 +187,7 @@
     background: transparent !important;
     border-radius: 20px;
     margin-bottom: 0.75rem;
+    overflow: hidden !important;
 }
 .dragon-interact-hint {
     position: absolute;
@@ -422,6 +423,15 @@ document.addEventListener('DOMContentLoaded', function() {
         mixer = new THREE.AnimationMixer(model);
         gltf.animations.forEach(function(clip) {
             const name = clip.name.toLowerCase();
+
+            // In-place attack motion: Strip global root forward translation so dragon attacks in-place and never exits the div
+            if (name === 'atk' || name === 'attack') {
+                clip.tracks = clip.tracks.filter(function(track) {
+                    const trackName = track.name.toLowerCase();
+                    return !trackName.includes('root_110.position') && !trackName.includes('root.upper_109.position');
+                });
+            }
+
             const action = mixer.clipAction(clip);
             action.setLoop(THREE.LoopRepeat, Infinity);
             actions[name] = action;
